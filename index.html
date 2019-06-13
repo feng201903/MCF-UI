@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>行情</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1,user-scalable=no">
+		<meta name="apple-mobile-web-app-capable" content="yes">
+		<meta name="apple-mobile-web-app-status-bar-style" content="black">
+		<!--标准mui.css-->
+		<link rel="stylesheet" href="resource/css/mui.min.css">
+
+	</head>
+
+	<body>
+		<script src="resource/js/tool/mui.min.js"></script>
+		<script src="resource/js/tool/util.js"></script>
+		<script src="resource/js/mcf.js"></script>
+		<script src="resource/js/mcf.update.js"></script>
+		<script src="resource/js/transcode/nacl_factory.js"></script>
+		<script>
+			if (readStorage("salt").length===0) {
+				nacl_factory.instantiate(function(nacl) {
+					var salt = nacl.crypto_secretbox_random_nonce();
+					console.log(nacl.to_hex(salt));
+					salt = {
+						"salt": nacl.to_hex(salt)
+					}
+					writeStorage("salt", salt);
+				})
+			} else {
+				// console.log(readStorage("salt"));
+			}
+
+
+			mui.init();
+
+			mui.plusReady(function() {
+				var _self = plus.webview.getLaunchWebview();
+				var _second = plus.webview.getSecondWebview();
+
+				_self.append(_second);
+
+				var aniShow = {};
+				util.initSubpage(aniShow);
+
+				var nview = plus.nativeObj.View.getViewById('tabBar'),
+					activePage = plus.webview.currentWebview(),
+					targetPage,
+					subpages = util.options.subpages,
+					pageW = window.innerWidth,
+					currIndex = 0;
+
+				nview.addEventListener('click', function(e) {
+					var clientX = e.clientX;
+					if (clientX > 0 && clientX <= parseInt(pageW * 0.33)) {
+						currIndex = 0;
+					} else if (clientX > parseInt(pageW * 0.33) && clientX <= parseInt(pageW * 0.66)) {
+						currIndex = 1;
+					} else {
+						currIndex = 2;
+					}
+					// 匹配对应tab窗口	
+					if (currIndex > 0) {
+						targetPage = plus.webview.getWebviewById(subpages[currIndex - 1]);
+					} else {
+						targetPage = plus.webview.currentWebview();
+					}
+					console.log(activePage.id + "通过底部切换到" + targetPage.id);
+
+					if (targetPage == activePage) {
+						return;
+					}
+
+					if (currIndex == 1) {
+						targetPage = plus.webview.getWebviewById(subpages[currIndex - 1]);
+						mui.fire(targetPage, 'listenEvents', {
+							eventName: 'uploadAssetBasicInfo',
+							msg: "更新资产基础信息",
+						});
+						setTimeout(function() {
+							util.toggleNview(currIndex);
+							util.changeSubpage(targetPage, activePage, aniShow);
+							activePage = targetPage;
+						}, 200);
+					} else {
+						util.toggleNview(currIndex);
+						util.changeSubpage(targetPage, activePage, aniShow);
+						activePage = targetPage;
+					}
+				});
+
+				plus.runtime.getProperty(plus.runtime.appid, function(inf) {
+					wgtVer = inf.version;
+					// console.log("当前应用版本：" + wgtVer);
+					checkUpdate('auto');
+				});
+
+				window.addEventListener('listenEvents', function(data) {
+					console.log(data.detail.eventName + "/" + data.detail.msg);
+					switch (data.detail.eventName) {
+						case 'tapLi':
+							currIndex = data.detail.currIndex;
+							targetPage = plus.webview.getWebviewById(subpages[currIndex - 1]);
+							mui.fire(targetPage, 'listenEvents', {
+								eventName: 'uploadAssetBasicInfo',
+								msg: "更新资产基础信息",
+							});
+							// targetPage.loadURL('page/deal.html');
+							setTimeout(function() {
+								util.toggleNview(currIndex);
+								util.changeSubpage(targetPage, activePage, aniShow);
+								activePage = targetPage;
+							}, 200);
+							break;
+					}
+				})
+
+
+			})
+		</script>
+	</body>
+</html>

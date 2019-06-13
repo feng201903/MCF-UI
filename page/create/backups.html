@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="utf-8">
+		<title>备份钱包</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1,user-scalable=no">
+		<meta name="apple-mobile-web-app-capable" content="yes">
+		<meta name="apple-mobile-web-app-status-bar-style" content="black">
+
+		<!--标准mui.css-->
+		<link rel="stylesheet" href="../../resource/css/mui.min.css">
+		<!--App自定义的css-->
+		<link rel="stylesheet" type="text/css" href="../../resource/css/mcf.app.css" />
+		<style>
+			.mui-content{
+				background-color: #FFF;
+				padding: 0px 5%;
+			}
+			.mcf-logo img{
+				width: 30%;
+				margin-top: 50px;
+				margin-left: 35%;
+			}
+			.top-text span{
+				display: block;
+				text-align: center;
+				margin: 15px 0;
+			}
+			.top-text .text1{
+				font-weight: 600;
+			}
+			.top-text .text2{
+				color: #C6C6C6;
+			}
+			.mcf-input-group{
+				margin-top: 30px;
+			}
+			
+		</style>
+
+	</head>
+
+	<body>
+		<div class="mui-content">
+			<div class="mcf-logo">
+				<img src="../../resource/images/logo.png" />
+				
+			</div>
+			<div class="top-text">
+				<span class="text1">立即备份你的钱包</span>
+				<span class="text2">备份钱包:导出「助记词」并抄写到安全的地方</span>
+			</div>
+			<div class="mcf-input-group">
+				<button id="btnBackup">备份钱包</button>
+			</div>
+		</div>
+		
+		<script src="../../resource/js/tool/mui.min.js"></script>
+		<script src="../../resource/js/tool/jquery.min.js"></script>
+		<script src="../../resource/js/mcf.js"></script>
+		<script type="text/javascript" charset="utf-8">
+			//mui初始化
+			mui.init({
+				swipeBack: true //启用右滑关闭功能
+			});
+
+			(function($) {
+				mui.plusReady(function() {
+					
+				})
+			})(mui);
+			
+			document.getElementById("btnBackup").addEventListener('tap', function(e) {
+				e.detail.gesture.preventDefault(); //修复iOS 8.x平台存在的bug，使用plus.nativeUI.prompt会造成输入法闪一下又没了
+				var btnArray = ['取消', '确定'];
+				mui.prompt('', '', '请输入密码：', btnArray, function(e) {
+					if (e.index == 1) {
+						checkPwd(e.value,"backups-word.html");
+					} else {
+// 						mui.alert('将返回重新创建', '已取消', function() {
+// 							delLastAccount();
+// 							jumppage('personal.html');
+// 						});
+					}
+				},'div')
+				document.querySelector('.mui-popup-input input').type='password';
+			});
+		</script>
+	</body>
+
+</html>

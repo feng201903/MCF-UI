@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>详情</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1,user-scalable=no">
+		<meta name="apple-mobile-web-app-capable" content="yes">
+		<meta name="apple-mobile-web-app-status-bar-style" content="black">
+		<!--标准mui.css-->
+		<link rel="stylesheet" href="../../resource/css/mui.min.css">
+		<!--App自定义的css-->
+		<link rel="stylesheet" type="text/css" href="../../resource/css/mcf.app.css" />
+		<style>
+			.mui-pull-top-tips {
+				position: absolute;
+				top: -20px;
+				left: 50%;
+				margin-left: -25px;
+				width: 40px;
+				height: 40px;
+				border-radius: 100%;
+				z-index: 1;
+			}
+
+			.mui-pull-top-wrapper {
+				width: 42px;
+				height: 42px;
+				display: block;
+				text-align: center;
+				background-color: #efeff4;
+				border: 1px solid #ddd;
+				border-radius: 25px;
+				background-clip: padding-box;
+				box-shadow: 0 4px 10px #bbb;
+				overflow: hidden;
+			}
+
+			.mui-pull-top-tips.mui-transitioning {
+				-webkit-transition-duration: 200ms;
+				transition-duration: 200ms;
+			}
+
+			.mui-pull-top-canvas canvas {
+				width: 40px;
+			}
+		</style>
+	</head>
+
+	<body>
+		<div class="mui-content transfer-record-page">
+			<div class="top">
+				<div class="amount" id="amount"></div>
+				<!-- <div class="amount-mcf">=<span id="amount-mcf"></span>MCF</div> -->
+			</div>
+			<div style="height: 25px;font-size: 14px;line-height: 25px;">最近转账记录</div>
+
+			<div class="mui-scroll-wrapper">
+				<div class="mui-scroll">
+					<ul class="mui-table-view" id="list">
+
+					</ul>
+				</div>
+			</div>
+		</div>
+		<script src="../../resource/js/tool/mui.min.js"></script>
+		<script src="../../resource/js/tool/mui.pullToRefresh.js"></script>
+		<script src="../../resource/js/tool/mui.pullToRefresh.material.js"></script>
+		<script src="../../resource/js/tool/jquery.min.js"></script>
+		<script src="../../resource/js/tool/axios.min.js"></script>
+		<script src="../../resource/js/mcf.js"></script>
+		<script>
+			var addr = getParam('addr');
+			var assetId = getParam('assetId');
+			var limit = 10;
+			var PAGE = 1;
+			mui.init({
+				swipeBack: false,
+			});
+			
+			(function($) {
+				$('.mui-scroll-wrapper').scroll({
+					indicators: true //是否显示滚动条
+				});
+				// loadList(page);
+				$('.mui-scroll').pullToRefresh({
+					down: {
+						callback: function() {
+							var self = this;
+							setTimeout(function() {
+								PAGE = 1;
+								jQuery("#list").html('');
+								loadList(PAGE);
+								self.refresh(true);
+								self.endPullDownToRefresh(false);
+							}, 1000);
+						}
+					},
+					up: {
+						callback: function() {
+							var self = this;
+							setTimeout(function() {
+								// console.log(PAGE)
+								var a = loadList(PAGE);
+								console.log(a)
+								self.endPullUpToRefresh(a);
+							}, 1000);
+
+						},
+						auto: true,
+					}
+				});
+
+				mui.get(API_SERVER+'assets/balances?address=' + addr + '&assetid=' + assetId + '&limit=0', {}, function(
+					data) {
+					jQuery("#amount").html(parseFloat(data[0].balance).toFixed(4));
+					// loadDealInfo();
+				}, 'json')
+
+
+				function loadList(page) {
+					console.log('加载第' + page + '页')
+					var htmlList = "";
+					var name = searchAssetInfo('id', assetId).name;
+					var showAddr = "";
+					var showNum = "";
+					var showColor = "";
+					var data = getRecord(page);
+					for (var i = 0, len = data.length; i < len; i++) {
+						// console.log(data[i].creatorAddress==addr)
+						showColor = ""
+						if (data[i].creatorAddress == addr) {
+							showAddr = cutAddr(data[i].recipient);
+							showNum = "-" + data[i].amount + name;
+							showColor = "c-red"
+						} else {
+							showAddr = cutAddr(data[i].creatorAddress);
+							showNum = "+" + data[i].amount + name;
+						}
+						htmlList = '<li class="record-list" data-signature="' + data[i].signature + '"> ' +
+							'<div class="li-left">' +
+							'<div class="li-left1">' + showAddr + '</div>' +
+							'<div class="li-left2">' + format(parseInt(data[i].timestamp)) + '</div></div>' +
+							'<div class="li-right ' + showColor + '">' + showNum + '</div>' +
+							'</li>';
+						jQuery("#list").append(htmlList);
+						mui("#list").off("tap");
+						mui('#list').on('tap', 'li', function() {
+							console.log(this.getAttribute('data-signature'));
+							openWindow("message-detail.html?signature=" + this.getAttribute('data-signature'))
+						});
+					}
+					console.log("获取下一页第"+(page-0+1)+"页数据长度，判断是否还有下一页")
+					var nextData = getRecord(page + 1);
+					PAGE++;
+					console.log("全局下一页设置为"+PAGE)
+					if (nextData.length > 0) {
+						console.log("下一页还有数据")
+						return false;
+					} else {
+						console.log("下一页没有数据")
+						return true;
+					}
+				}
+			})(mui);
+
+
+			function getRecord(page) {
+				console.log("生成第"+page+"页URL")
+				
+				var offset = (page - 1) * limit;
+				console.log("第"+page+"页起始为"+offset)
+				var result = [];
+				if (assetId === '0') {
+					console.log("MCF");
+					// var url = API_SERVER+'assets/transfers/' + assetId + '/' + addr + '?limit=' + limit + '&offset=' +
+					// 	offset + '&reverse=true';
+						var url = API_SERVER+'transactions/search?txType=PAYMENT&address=' + addr + '&confirmationStatus=CONFIRMED&limit=' + limit + '&offset='+offset+'&reverse=true';
+				} else {
+					var url = API_SERVER+'assets/transfers/' + assetId + '?address=' + addr + '&limit=' + limit + '&offset=' +
+						offset + '&reverse=true';
+				}
+				console.log(url);
+				mui.ajax(url, {
+					async: false,
+					success: function(data) {
+						result = data;
+					},
+					error: function(xhr, type, errorThrown) {
+						console.log(type);
+					}
+				});
+				return result;
+			}
+
+			function toDetail(signature) {
+				console.log(signature);
+				openWindow("message-detail.html?signature=" + signature)
+			}
+		</script>
+	</body>
+</html>

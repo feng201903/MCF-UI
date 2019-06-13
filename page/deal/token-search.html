@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+		<title></title>
+		<link href="../../resource/css/mui.min.css" rel="stylesheet" />
+		<link href="../../resource/css/mui.indexedlist.css" rel="stylesheet" />
+		<style>
+			html,
+			body {
+				height: 100%;
+				overflow: hidden;
+			}
+			.mui-bar {
+				-webkit-box-shadow: none;
+				box-shadow: none;
+			}
+			li .mui-switch-mini{
+				margin-right: 5%;
+			}
+			li img{
+				float: left;
+			}
+			li .token-sname{
+				float: left;
+				height: 32px;
+				line-height: 32px;
+				margin-left: 2%;
+			}
+			li .token-fname{
+				float: right;
+				height: 32px;
+				line-height: 32px;
+				margin-right: 15%;
+			}
+			input[type=checkbox]{
+				padding-right: 40px;
+				margin-top: 5px;
+			}
+			#assetList li img{width: 30px;}
+		</style>
+	</head>
+
+	<body>
+		<div class="mui-content mui-fullscreen">
+			<div id='list' class="mui-indexed-list mui-fullscreen">
+				<div class="mui-indexed-list-search mui-input-row mui-search">
+					<input type="search" class="mui-input-clear mui-indexed-list-search-input" placeholder="搜索">
+				</div>
+				<div class="mui-indexed-list-bar">
+					<a>A</a>
+					<a>B</a>
+					<a>C</a>
+					<a>D</a>
+					<a>E</a>
+					<a>F</a>
+					<a>G</a>
+					<a>H</a>
+					<a>I</a>
+					<a>J</a>
+					<a>K</a>
+					<a>L</a>
+					<a>M</a>
+					<a>N</a>
+					<a>O</a>
+					<a>P</a>
+					<a>Q</a>
+					<a>R</a>
+					<a>S</a>
+					<a>T</a>
+					<a>U</a>
+					<a>V</a>
+					<a>W</a>
+					<a>X</a>
+					<a>Y</a>
+					<a>Z</a>
+				</div>
+				<div class="mui-indexed-list-alert"></div>
+				<div class="mui-indexed-list-inner">
+					<div class="mui-indexed-list-empty-alert">没有数据</div>
+					<ul class="mui-table-view" id="assetList">
+
+					</ul>
+				</div>
+			</div>
+		</div>
+		<script src="../../resource/js/tool/mui.min.js"></script>
+		<script src="../../resource/js/tool/mui.indexedlist.js"></script>
+		<script src="../../resource/js/tool/jquery.min.js"></script>
+		<script src="../../resource/js/mcf.js"></script>
+		<script src="https://cdn.jsdelivr.net/npm/axios@0.12.0/dist/axios.min.js"></script>
+		<script type="text/javascript" charset="utf-8">
+			accountAddr = getParam("addr");
+			var arrSelected = readStorage(accountAddr + "-addressSelectedAssets");
+			var list = document.getElementById('list');
+			list.style.height = (document.body.offsetHeight) + 'px';
+			mui.init({
+				beforeback: function() {
+					// 					if (plus.webview.getWebviewById('./user/assets.html')) {
+					// 						var web = plus.webview.getWebviewById('./user/assets.html');
+					// 					} else {
+					// 						var web = plus.webview.getWebviewById('assets.html?addr=' + accountAddr);
+					// 					}
+					// 					return true;
+				}
+			});
+
+
+			var arrAsset = readStorage('allAssetsInfo');
+			// console.log(JSON.stringify(readStorage('allAssetsInfo')[0]))
+			var arr = pySegSort(arrAsset).segs;
+			for (var key in arr) {
+				// console.log(arr[key]);
+				var html1 = '<li data-group="' + arr[key].letter + '" class="mui-table-view-divider mui-indexed-list-group">' +
+					arr[
+						key].letter + '</li>';
+				$("#assetList").append(html1);
+				for (var k in arr[key].data) {
+					var strChecked = "";
+					// 					console.log(arr[key].data[k].name)
+					// 					console.log(k)
+					if (readStorage(accountAddr + "-addressSelectedAssets").indexOf(arr[key].data[k].assetId.toString()) !== -1) {
+						strChecked = "checked";
+					}
+					var assetInfo = searchAssetInfo('id', arr[key].data[k].assetId);
+					console.log(assetInfo.data)
+					if (assetInfo.data) {
+						var assetInfoDate = JSON.parse(assetInfo.data);
+						if (assetInfoDate.logo) {
+							var logo = assetInfoDate.logo;
+						} else {
+							var logo = "../../resource/images/guandiao.png"
+						}
+
+					} else {
+						var logo = "../../resource/images/guandiao.png"
+					}
+					var html2 = '<li data-value="CTC" data-tags="' + arr[key].data[k].name +
+						'" data-assetId="' + arr[key].data[k].assetId +
+						'" class="mui-table-view-cell mui-indexed-list-item mui-input-row mui-checkbox">' +
+						'<img src="' + logo + '">' +
+						'<div class="token-sname">' + arr[key].data[k].name + '</div>' +
+						'</li>';
+					$("#assetList").append(html2);
+				}
+			}
+
+			var arrSelected = readStorage(accountAddr + "-addressSelectedAssets");
+			mui('.mui-table-view').on('tap', 'li', function() {
+				console.log(this.getAttribute('data-tags'));
+				console.log(this.getAttribute('data-assetId'));
+				var defaultAssetInfo = searchAssetInfo('id', this.getAttribute('data-assetId'))
+				writeStorage("defaultAssetInfo", defaultAssetInfo);
+
+				console.log(plus.webview.getWebviewById('deal/market.html') !== null);
+				if (!plus.webview.getWebviewById('deal/market.html')) {
+					console.log(1)
+					var launch = plus.webview.getLaunchWebview();
+					mui.fire(launch, 'listenEvents', {
+						eventName: 'tapLi',
+						currIndex: 1,
+						msg: "搜索页面点击列表跳转到交易页面",
+					});
+				} else {
+					console.log(2)
+					var deal = plus.webview.getWebviewById('page/deal.html');
+					mui.fire(deal, 'listenEvents', {
+						eventName: 'uploadAssetBasicInfo',
+						msg: "点击搜索页面列表，关闭maeket和搜索后刷新资产",
+					});
+					var market = plus.webview.getWebviewById('deal/market.html');
+					plus.webview.close(market);
+				}
+				var _self = plus.webview.currentWebview();
+				plus.webview.close(_self);
+			});
+
+
+			window.indexedList = new mui.IndexedList(list);
+
+
+			//所有资产排序
+			function pySegSort(arr, empty) {
+				if (!String.prototype.localeCompare)
+					return null;
+				var letters = "*ABCDEFGHJKLMNOPQRSTWXYZ".split('');
+				var zh = "ABCDEFGHJKLMNOPQRSTWXYZ".split('');
+				var segs = []; // 存放数据
+				var py = []; // 存放首字母
+				var res = {};
+				var curr;
+				mui.each(letters, function(i) {
+					curr = {
+						letter: this,
+						data: []
+					};
+					mui.each(arr, function(k, v) {
+						if(v.assetId == 0) return;
+						if ((!zh[i - 1] || zh[i - 1].localeCompare(v.name) <= 0) && v.name.localeCompare(zh[i]) == -1) {
+							curr.data.push(this);
+						}
+					});
+					if (empty || curr.data.length) {
+						py.push(this);
+						segs.push(curr);
+						curr.data.sort(function(a, b) {
+							return a.name.localeCompare(b.name);
+						});
+					}
+				});
+				res["segs"] = segs;
+				res["py"] = py;
+				return res;
+			}
+		</script>
+	</body>
+
+</html>

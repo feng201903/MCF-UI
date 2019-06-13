@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>转账</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1,user-scalable=no">
+		<meta name="apple-mobile-web-app-capable" content="yes">
+		<meta name="apple-mobile-web-app-status-bar-style" content="black">
+
+		<!--标准mui.css-->
+		<link rel="stylesheet" href="../../resource/css/mui.min.css">
+		<!--App自定义的css-->
+		<link rel="stylesheet" type="text/css" href="../../resource/css/mcf.app.css" />
+		<style>
+			.mui-content{
+				background-color: #FFF;
+				padding: 0 10%;
+			}
+			.transfer-title{
+				margin-top: 30px;
+				height: 30px;
+				line-height: 30px;
+			}
+			.title-bj{
+				width: 15px;
+				background-color:#81C0CF ;
+				height: 100%;
+				float: left;
+				border-radius: 3px;
+			}
+			.title-text{
+				float: left;
+				margin-left: 25px;
+				font-weight: 600;
+			}
+			.token-name{
+				margin-top: 20px;
+				height: 40px;
+				line-height: 30px;
+				background-color: #F2F2F2;
+				color: #81C0CF;
+			}
+			.token-name select{
+				padding-left: 15px;
+				background-color: #F2F2F2;
+			}
+			.trans-con span{
+				margin-top: 27px;
+			}
+			.trans-con input{
+				margin-top: 20px;
+				border: none;
+				background-color: #F2F2F2;
+				width: 90%;
+			}
+			.token-addr{
+				font-size: 15px;
+				width: 70%;
+				word-wrap: break-word;
+				word-break: break-all;
+				overflow: hidden;
+				float: left;
+				color: #81C0CF;
+			}
+			.transfer-value input{
+				margin-top: 20px;
+				border: none;
+				background-color: #F2F2F2;
+				padding: 10px 20px;
+				width: 100%;
+			}
+		</style>
+	</head>
+
+	<body>
+		<div class="mui-content">
+			<div class="transfer-title">
+				<div class="title-bj"></div>
+				<div class="title-text">转账种类</div>
+			</div>
+			<div class="token-name">
+				<div class="mui-input-row mui-select">
+					<select id="assetId">
+					</select>
+				</div>
+			</div>
+
+			<div class="transfer-title">
+				<div class="title-bj"></div>
+				<div class="title-text">转账地址</div>
+			</div>
+			<div class="trans-con">
+				<input type="text" id="toaddr" class="mui-input-clear" placeholder="输入或粘贴">
+				<!-- <div class="token-addr">0x7ewew233333213123213213123213213</div> -->
+				<span class="mui-icon mui-icon-contact mui-pull-right" onclick="openContact()"></span>
+			</div>
+			<div class="transfer-title">
+				<div class="title-bj"></div>
+				<div class="title-text">转账金额</div>
+			</div>
+			<div class="transfer-value">
+				<input type="text" id="amount" placeholder="">
+			</div>
+			<div class="title-text" style="margin-top: 30px;margin-left: 0px;">转账手续费:0.00001 MCF</div>
+			<button id="btnSub" class="mcf-btn mcf-btn-blue" style="margin-top: 40px;width: 80%;height: 40px;margin-left: 10%;">确定</button>
+		</div>
+
+		<script src="../../resource/js/tool/mui.min.js"></script>
+		<script src="../../resource/js/tool/jquery.min.js"></script>
+		<script src="../../resource/js/transcode/crypto-js.js"></script>
+		<script src="../../resource/js/transcode/sha256.js"></script>
+		<script src="../../resource/js/transcode/unorm.js"></script>
+		<script src="../../resource/js/transcode/sjcl-bip39.js"></script>
+		<script src="../../resource/js/transcode/wordlist_chinese_simplified.js"></script>
+		<script src="../../resource/js/transcode/wordlist_chinese_traditional.js"></script>
+		<script src="../../resource/js/transcode/wordlist_english.js"></script>
+		<script src="../../resource/js/transcode/wordlist_french.js"></script>
+		<script src="../../resource/js/transcode/wordlist_italian.js"></script>
+		<script src="../../resource/js/transcode/wordlist_japanese.js"></script>
+		<script src="../../resource/js/transcode/wordlist_korean.js"></script>
+		<script src="../../resource/js/transcode/wordlist_spanish.js"></script>
+		<script src="../../resource/js/transcode/jsbip39.js"></script>
+		<script src="../../resource/js/transcode/nacl_factory.js"></script>
+		<script src="../../resource/js/mcf.transcode.js"></script>
+		<script src="../../resource/js/mcf.js"></script>
+
+		<script>
+			getParam("fromaddr") ? fromaddr = getParam("fromaddr") : fromaddr = "";
+			getParam("toaddr") ? toaddr = getParam("toaddr") : toaddr = "";
+			getParam("amount") ? amount = getParam("amount") : amount = "";
+			$("#toaddr").val(toaddr);
+			$("#amount").val(amount);
+
+			mui.init({
+				swipeBack: false,
+			});
+			(function($) {
+				loadBalances();
+
+				mui.plusReady(function() {
+					// getAW();
+					var ws = plus.webview.getWebviewById("barcode_scan.html?fromaddr=" + getParam("fromaddr"));
+					plus.webview.close(ws, false);
+				})
+			})(mui);
+
+			//加载可转账资产列表
+			function loadBalances() {
+				mui.get(API_SERVER + 'assets/balances?address=' + fromaddr + '&limit=0', {}, function(data) {
+					// console.log(data)
+					for (var key in data) {
+						if (data[key].balance <= 0) {
+							continue;
+						}
+						var htmlList = '<option value="' + data[key].assetId + '">' + data[key].assetName + '：' + data[key].balance +
+							'</option>';
+						jQuery("#assetId").append(htmlList);
+					}
+				}, 'json');
+			}
+
+			//交易数量只能输入正整数
+			var amountKeydownFun = function(obj) {
+				if ($("#assetId").val() > 0) {
+					if (obj.value.length == 1) {
+						obj.value = obj.value.replace(/[^1-9]/g, '')
+					} else {
+						obj.value = obj.value.replace(/\D/g, '')
+					}
+				} else {
+					var len = 8;
+					obj.value = obj.value.replace(/[^\d.]/g, ""); //清除"数字"和"."以外的字符  
+					obj.value = obj.value.replace(/^\./g, ""); //验证第一个字符是数字而不是  
+					obj.value = obj.value.replace(/\.{2,}/g, ""); //只保留第一个. 清除多余的  
+					obj.value = obj.value.replace(".", "$#$").replace(/\./g, "").replace("$#$", ".");
+					var re = new RegExp("^(\\-)*(\\d+)\\.(\\d{" + len + "}).*$");
+					obj.value = obj.value.replace(re, '$1$2.$3');
+				}
+
+			}
+
+			var amountKeyupFun = function(obj) {
+				if ($("#assetId").val() > 0) {
+					if (obj.value.length == 1) {
+						obj.value = obj.value.replace(/[^1-9]/g, '')
+					} else {
+						obj.value = obj.value.replace(/\D/g, '')
+					}
+				} else {
+					var len = 8;
+					obj.value = obj.value.replace(/[^\d.]/g, ""); //清除"数字"和"."以外的字符  
+					obj.value = obj.value.replace(/^\./g, ""); //验证第一个字符是数字而不是  
+					obj.value = obj.value.replace(/\.{2,}/g, ""); //只保留第一个. 清除多余的  
+					obj.value = obj.value.replace(".", "$#$").replace(/\./g, "").replace("$#$", ".");
+					var re = new RegExp("^(\\-)*(\\d+)\\.(\\d{" + len + "}).*$");
+					obj.value = obj.value.replace(re, '$1$2.$3');
+				}
+			}
+
+			var amoutPasteFun = function(obj) {
+				if ($("#assetId").val() > 0) {
+					if (obj.value.length == 1) {
+						obj.value = obj.value.replace(/[^1-9]/g, '')
+					} else {
+						obj.value = obj.value.replace(/\D/g, '')
+					}
+				} else {
+					var len = 8;
+					obj.value = obj.value.replace(/[^\d.]/g, ""); //清除"数字"和"."以外的字符  
+					obj.value = obj.value.replace(/^\./g, ""); //验证第一个字符是数字而不是  
+					obj.value = obj.value.replace(/\.{2,}/g, ""); //只保留第一个. 清除多余的  
+					obj.value = obj.value.replace(".", "$#$").replace(/\./g, "").replace("$#$", ".");
+					var re = new RegExp("^(\\-)*(\\d+)\\.(\\d{" + len + "}).*$");
+					obj.value = obj.value.replace(re, '$1$2.$3');
+				}
+			}
+
+			$("#amount").keyup(function() {
+				amountKeyupFun(this);
+			})
+
+			$("#amount").keydown(function() {
+				amountKeydownFun(this);
+			})
+
+			$("#amount").bind("paste", function() {
+				amoutPasteFun(this);
+			})
+
+			$("#assetId").bind("change", function() {
+				$("#amount").val("");
+			})
+
+
+			//打开联系人/
+			function openContact() {
+				openWindow("contacts.html?fromaddr=" + getParam("fromaddr"), "联系人");
+			}
+
+			document.getElementById("btnSub").addEventListener('tap', function(e) {
+				var assetId = $("#assetId").val();
+				if ($("#toaddr").val() == "" || $("#amount").val() == "") {
+					mui.toast('请输入转账地址和金额');
+					return;
+				} else {
+					toaddr = $("#toaddr").val();
+					amount = $("#amount").val();
+				}
+				e.detail.gesture.preventDefault(); //修复iOS 8.x平台存在的bug，使用plus.nativeUI.prompt会造成输入法闪一下又没了
+				var btnArray = ['取消', '确定'];
+				mui.prompt('', '', '请输入密码：', btnArray, function(e) {
+					if (e.index == 1) {
+						if (e.value) {
+							var pwd = e.value;
+						} else {
+							mui.toast('请输入密码！');
+							return;
+						}
+						nacl_factory.instantiate(function(nacl) {
+							var privateKey = checkAddrPwd(fromaddr, pwd);
+							if (privateKey.error) {
+								mui.toast(privateKey.error);
+								return;
+							} else {
+								var privateKeyHex = nacl.to_hex((decode(privateKey)));
+								var kp = nacl.crypto_sign_seed_keypair(nacl.from_hex(privateKeyHex));
+								var publicKey = encode(kp.signPk);
+							}
+							//时间戳
+							var timestamp = strAddZero(parseInt(new Date().getTime()).toString(16), 16);
+							/**根据地址获取reference**/
+							var lastreference = mui_ajax(API_SERVER + 'addresses/' + fromaddr, "", "get", "json").reference;
+							if (lastreference == "false") {
+								mui.toast('无法获取reference');
+								return;
+							} else {
+								var reference = nacl.to_hex(decode(lastreference));
+
+							}
+							var fee = strAddZero(parseInt(FEE * 100000000).toString(16), 16);
+							var spk = nacl.to_hex(decode(publicKey));
+							var recipient = nacl.to_hex(decode(toaddr));
+
+							var txGroupId = '00000000';
+							if (assetId == 0) {
+								var head = '00000002';
+								amount = strAddZero(parseInt(amount * 100000000).toString(16), 16);
+								var signStr = head + timestamp + txGroupId + reference + spk + recipient + amount + fee;
+							} else {
+								var head = '0000000c';
+								assetId = strAddZero(parseInt(assetId).toString(16), 16);
+								amount = strAddZero(parseInt(amount * 100000000).toString(16), 24);
+								var signStr = head + timestamp + txGroupId + reference + spk + recipient + assetId + amount +
+									fee;
+							}
+							signStr = encode(nacl.from_hex(signStr));
+
+							var trBytes = decode(signStr);
+							var kp1 = nacl.crypto_sign_seed_keypair(decode(privateKey));
+							var c = nacl.crypto_sign_detached(trBytes, kp1.signSk);
+							var buffer1 = new Uint8Array(trBytes);
+							var buffer2 = new Uint8Array(c);
+							var tmp = new Uint8Array(buffer1.byteLength + buffer2.byteLength);
+							tmp.set(buffer1, 0);
+							tmp.set(buffer2, buffer1.byteLength);
+							// return;
+							var process = mui_ajax(API_SERVER + 'transactions/process', encode(tmp), "post", "text");
+							if (process == "true") {
+								mui.alert('将返回我的资产', '转账成功', function() {
+									var ws = plus.webview.currentWebview();
+									plus.webview.close(ws);
+								});
+							} else {
+								console.log(process)
+								process = JSON.parse(process);
+								console.log(process)
+								switch (process.message) {
+									case "transaction invalid: NO_BALANCE":
+										mui.alert('原因可能如下：\n1.	上一笔交易还未被区块确认\n2.	当前转账资产种类余额不足\n3.	没有足够的MCF转账手续费', '转账失败!', function() {
+											//window.location.reload();
+										});
+										break;
+									default:
+									mui.alert('原因可能如下：\n1.	上一笔交易还未被区块确认\n2.	当前转账资产种类余额不足\n3.	没有足够的MCF转账手续费', '转账失败!', function() {
+										//window.location.reload();
+									});
+								}
+								
+							}
+
+						});
+					} else {
+
+					}
+				}, 'div')
+				document.querySelector('.mui-popup-input input').type = 'password';
+			});
+		</script>
+	</body>
+</html>

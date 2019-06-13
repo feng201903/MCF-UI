@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="utf-8">
+		<title>新建联系人</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1,user-scalable=no">
+		<meta name="apple-mobile-web-app-capable" content="yes">
+		<meta name="apple-mobile-web-app-status-bar-style" content="black">
+
+		<!--标准mui.css-->
+		<link rel="stylesheet" href="../../resource/css/mui.min.css">
+		<!--App自定义的css-->
+		<link rel="stylesheet" type="text/css" href="../../resource/css/mcf.app.css" />
+		<link rel="stylesheet" type="text/css" href="../../resource/css/percircle.css" />
+	</head>
+
+	<body>
+		<style>
+			.mui-content{
+				background-color: #FFF;
+				padding:0 5%;
+			}
+			.mui-input-row label{
+				width: 20%;
+			}
+			.mui-input-row label~input{
+				width: 80%;
+			}
+			.mui-input-group:before,
+			.mui-input-group:after,
+			.mui-input-group .mui-input-row:after{
+				height: 0px;
+			}
+		</style>
+		<div class="mui-content">
+			<form class="mui-input-group">
+				<div class="mui-input-row" style="margin-top: 50px;">
+					<label>备注</label>
+					<input type="text" class="mui-input-clear" id="name" placeholder="请输入内容">
+				</div>
+				<div class="mui-input-row">
+					<label>地址</label>
+					<input type="text" class="mui-input-clear" id="addr" placeholder="请输入内容">
+				</div>
+			</form>
+			<button class="mcf-btn mcf-btn-blue" style="margin-top: 40px;width: 80%;height: 40px;margin-left: 10%;" id="btnSub">确定</button>
+		</div>
+		
+		<script src="../../resource/js/tool/mui.min.js"></script>
+		<script src="../../resource/js/tool/jquery.min.js"></script>
+		<script src="../../resource/js/mcf.js"></script>
+		<script>
+			mui.init({
+				swipeBack: false
+			});
+			(function($) {
+				console.log(getParam("fromaddr"));
+			})(mui);
+			
+			$("#btnSub").click(function(){
+				if ($('#name').val() == "" || $('#addr').val() == "") {
+					mui.toast('请填写完整');
+					return;
+				}
+				var arr = {
+					"name": $('#name').val(),
+					"addr": $('#addr').val(),
+				}
+				
+				var contactsData = readStorage("contacts");
+				contactsData.push(arr);
+				writeStorage("contacts",contactsData);
+				if(getParam("fromaddr")){
+					jumppage("transfer.html?fromaddr="+getParam("fromaddr")+"&toaddr="+$('#addr').val());
+				}else{			
+					jumppage("contacts.html");
+				}
+			})
+		</script>
+
+	</body>
+
+</html>

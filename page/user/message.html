@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>消息中心</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1,user-scalable=no">
+		<meta name="apple-mobile-web-app-capable" content="yes">
+		<meta name="apple-mobile-web-app-status-bar-style" content="black">
+		<!--标准mui.css-->
+		<link rel="stylesheet" href="../../resource/css/mui.min.css">
+		<!--App自定义的css-->
+		<link rel="stylesheet" type="text/css" href="../../resource/css/mcf.app.css" />
+		<style>
+			li {
+				height: 80px;
+				line-height: 30px;
+			}
+
+			.message-recipient {
+				width: 65%;
+				float: left;
+				color: #6C6C6C;
+				font-size: 14px;
+			}
+
+			.message-time {
+				width: 35%;
+				float: right;
+				font-size: 12px;
+			}
+		</style>
+	</head>
+
+	<body>
+		<div class="mui-content">
+			<div id="scroll4" class="mui-scroll-wrapper">
+				<div id="slider3" class="mui-slider">
+					<ul class="mui-table-view" style="margin-top: 0px;" id="messageList">
+
+					</ul>
+				</div>
+			</div>
+		</div>
+		<script src="../../resource/js/tool/mui.min.js"></script>
+		<script src="../../resource/js/tool/jquery.min.js"></script>
+		<script src="../../resource/js/tool/axios.min.js"></script>
+		<script src="../../resource/js/mcf.js"></script>
+		<script>
+			var defaultAccount = readStorage("defaultAccount").addr;
+			var htmlLi = "";
+			mui.init({
+				swipeBack: false,
+				beforeback: function() {
+					var web = plus.webview.getWebviewById('page/user.html');
+					mui.fire(web, 'listenEvents', {
+						msg: "关闭消息中心启用消息刷新",
+						eventName: 'closeMessage'
+					});
+				}
+			});
+
+			(function($) {
+				$('.mui-scroll-wrapper').scroll({
+					indicators: true //是否显示滚动条
+				});
+				mui.plusReady(function() {
+					// getAW();
+				})
+			})(mui);
+
+			checkNewMessage();
+
+			//检查消息
+			function checkNewMessage() {
+				axios.all([getPaymentMessage()])
+					.then(axios.spread(function(PaymentMessage) {
+						PaymentMessage.data.length > 20 ? arrLength = 20 : arrLength = PaymentMessage.data.length;
+						for (var i = 0; i < arrLength; i++) {
+							// console.log(PaymentMessage.data[i]);
+							var type = PaymentMessage.data[i].type;
+							switch (type) {
+								case 'PAYMENT':
+									//MCF转账
+									htmlLi = '<li class="mui-table-view-cell" onclick="toDetail(\'' + PaymentMessage.data[i].signature + '\')">' +
+										'<div class="message-title">收付通知:' + PaymentMessage.data[i].amount + 'MCF 收付成功</div>' +
+										'<div class="message-recipient"></div>' +
+										'<div class="message-time">' + format(parseInt(PaymentMessage.data[i].timestamp)) + '</div></li>';
+									$("#messageList").append(htmlLi);
+									break;
+
+								case 'TRANSFER_ASSET':
+									//其他币种转账
+									var arr = searchAssetInfo("id", PaymentMessage.data[i].assetId)
+									htmlLi = '<li class="mui-table-view-cell" onclick="toDetail(\'' + PaymentMessage.data[i].signature + '\')">' +
+										'<div class="message-title">收付通知:' + PaymentMessage.data[i].amount + ' ' + arr.name + ' 收付成功</div>' +
+										'<div class="message-recipient"></div>' +
+										'<div class="message-time">' + format(parseInt(PaymentMessage.data[i].timestamp)) + '</div></li>';
+									$("#messageList").append(htmlLi);
+									break;
+								case 'ISSUE_ASSET':
+									//发行资产
+									var strApprovalState = "";
+									switch (PaymentMessage.data[i].approvalStatus) {
+										case "NOT_REQUIRED":
+										case "APPROVED":
+											strApprovalState = "已通过审核";
+											break;
+										case "PENDING":
+											strApprovalState = "待审核";
+											break;
+										case "REJECTED":
+										case "EXPIRED":
+										case "INVALID":
+											strApprovalState = "未通过审核";
+											break;
+										default:
+											strApprovalState = "未知状态";
+											break;
+									}
+									
+									htmlLi = '<li class="mui-table-view-cell">' +
+										'<div class="message-title">您发行的资产' + PaymentMessage.data[i].assetName + '已通过审核</div>' +
+										'<div class="message-recipient">发行总量:' + PaymentMessage.data[i].quantity + '</div>' +
+										'<div class="message-time">' + format(parseInt(PaymentMessage.data[i].timestamp)) + '</div></li>';
+									$("#messageList").append(htmlLi);
+									break;
+
+							}
+						}
+					}));
+			}
+
+
+			//获取交易记录
+			function getPaymentMessage() {
+				return axios.get(API_SERVER +
+					'transactions/search?txType=PAYMENT&txType=ISSUE_ASSET&txType=TRANSFER_ASSET&address=' + defaultAccount +
+					'&confirmationStatus=CONFIRMED&limit=20&reverse=true');
+			}
+
+			function toDetail(signature) {
+				// console.log(signature);
+				openWindow("message-detail.html?signature=" + signature)
+			}
+		</script>
+	</body>
+</html>

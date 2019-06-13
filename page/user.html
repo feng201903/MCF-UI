@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="utf-8">
+		<title>我的</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1,user-scalable=no">
+		<meta name="apple-mobile-web-app-capable" content="yes">
+		<meta name="apple-mobile-web-app-status-bar-style" content="black">
+
+		<!--标准mui.css-->
+		<link rel="stylesheet" href="../resource/css/mui.min.css">
+		<!--App自定义的css-->
+		<link rel="stylesheet" type="text/css" href="../resource/css/mcf.app.css" />
+	</head>
+
+	<body>
+		<div class="mui-content">
+			<ul class="mui-table-view" style="margin-top: 0px;">
+				<li class="mui-table-view-cell">
+					<a class="mui-navigate-right" onclick="openWindow('./user/wallet.html','我的钱包')">我的钱包</a>
+				</li>
+				<li class="mui-table-view-cell">
+					<a class="mui-navigate-right" onclick="openAssets()">我的资产</a>
+				</li>
+				<li class="mui-table-view-cell">
+					<a class="mui-navigate-right" onclick="openMessage()">消息中心</a>
+				</li>
+				<li class="mui-table-view-cell">
+					<a class="mui-navigate-right" onclick="openWindow('./user/issue.html','发行资产/批量转资产')">发行资产/批量转资产</a>
+				</li>
+				<!-- <li class="mui-table-view-cell">
+					<a class="mui-navigate-right">我的商铺</a>
+				</li> -->
+				<li class="mui-table-view-cell">
+					<a class="mui-navigate-right" onclick="update()" id="update">版本更新</a>
+				</li>
+			</ul>
+		</div>
+		<script src="../resource/js/tool/mui.min.js"></script>
+		<script src="../resource/js/tool/jquery.min.js"></script>
+		<script src="../resource/js/tool/axios.min.js"></script>
+		<script src="../resource/js/mcf.js"></script>
+		<script src="../resource/js/mcf.update.js"></script>
+		<script>
+			mui.init({
+				swipeBack: false
+			});
+
+			// var defaultAccount = readStorage("defaultAccount").addr;
+			function update(){
+				plus.runtime.getProperty(plus.runtime.appid, function(inf) {
+					wgtVer = inf.version;
+					// console.log("当前应用版本：" + wgtVer);
+					checkUpdate('user');
+				});
+			}
+
+			(function($) {
+				checkAdmin();
+				mui.plusReady(function() {
+					ws = plus.webview.currentWebview();
+					ws.setStyle({
+						titleNView: {
+							titleText: '我的'
+						}
+					});
+					plus.runtime.getProperty(plus.runtime.appid, function(inf) {
+						wgtVer = inf.version;
+						// console.log("当前应用版本：" + wgtVer);
+						jQuery("#update").append("(V"+wgtVer+")")
+					});
+					
+					
+					window.addEventListener('listenEvents', function(data) {
+						console.log(data.detail.eventName + "/" + data.detail.msg);
+						switch (data.detail.eventName) {
+							case 'closeMessage':
+								setInterval(checkNewMessage(), 3000);
+								break;
+							case 'defaultAccountChange':
+								checkAdmin();
+								break;
+						}
+					})
+				})
+			})(mui);
+
+			//检查消息
+			var checkNewMessage = function() {
+				// console.log("正在刷新消息")
+				axios.all([getPaymentMessage()])
+					.then(axios.spread(function(PaymentMessage) {
+						if (PaymentMessage.data.length == 0) {
+							return;
+						} else {
+							if ((new Date().getTime() - PaymentMessage.data[0].timestamp) / 1000 < 600) {
+								if ($("ul li").eq(2).children('span').length === 0) {
+									$("ul li").eq(2).append('<span class="mui-badge mui-badge-danger">&nbsp;&nbsp;</span>')
+								}
+							}
+						}
+					}))
+					.catch(function(err){
+						console.log(err)
+					});
+				return checkNewMessage;
+			}
+			var startCheck = setInterval(checkNewMessage(), 10*60*1000);
+
+			//打开资产页面
+			function openAssets() {
+				if (typeof(readStorage("defaultAccount").addr) == "undefined") {
+					mui.toast('尚未创建钱包')
+				} else {
+					openWindow('./user/assets.html', '我的资产');
+				}
+			}
+
+			//打开消息中心
+			function openMessage() {
+				if (typeof(readStorage("defaultAccount").addr) == "undefined") {
+					mui.toast('尚未创建钱包')
+				} else {
+					$("ul li").eq(2).children('span').remove();
+					openWindow('./user/message.html', '消息中心');
+					console.log("停止刷新消息")
+					window.clearInterval(startCheck);
+				}
+			}
+
+			function openVerify() {
+				openWindow('./user/verify.html', '审核任务');
+			}
+
+			//获取MCF交易记录
+			function getPaymentMessage() {
+				var defaultAccount = readStorage("defaultAccount").addr;
+				if(!defaultAccount)return false;
+				return axios.get(API_SERVER+'transactions/search?txType=PAYMENT&txType=ISSUE_ASSET&txType=TRANSFER_ASSET&address=' + defaultAccount +
+					'&confirmationStatus=CONFIRMED&limit=1&reverse=true');
+			}
+
+
+
+			//验证管理员
+			function checkAdmin() {
+				var isAdmin = false,
+				defaultAccount = readStorage("defaultAccount").addr;
+				mui.getJSON(API_SERVER+'groups/members/2?onlyAdmins=true&limit=0', '', function(data) {
+					// console.log(defaultAccount)
+					for (var key in data.members) {
+						if (data.members[key].member == defaultAccount) {
+							isAdmin = true;
+						}
+					}
+
+					if (isAdmin) {
+						// console.log("是管理员");
+						$("#ve").remove();
+						$('<li class="mui-table-view-cell" id="ve"><a class="mui-navigate-right" onclick="openVerify()">审核任务</a></li>').insertBefore(
+							"ul li:eq(3)");
+					} else {
+						// console.log("不是管理员");
+						$("#ve").remove();
+					}
+				})
+			}
+		</script>
+	</body>
+</html>

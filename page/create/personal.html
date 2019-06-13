@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>创建钱包</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1,user-scalable=no">
+		<meta name="apple-mobile-web-app-capable" content="yes">
+		<meta name="apple-mobile-web-app-status-bar-style" content="black">
+
+		<!--标准mui.css-->
+		<link rel="stylesheet" href="../../resource/css/mui.min.css">
+		<!--App自定义的css-->
+		<link rel="stylesheet" type="text/css" href="../../resource/css/mcf.app.css" />
+		<style>
+			.mui-content{
+				background-color: #FFF;
+				padding: 0px 5%;
+			}
+			ul{
+				background-color: #F2DEE0;
+				padding: 15px 10%;
+				color: #B6666C;
+				font-weight: 400;
+				font-size: 15px;
+				line-height: 25px;
+				border-radius: 3px;
+			}
+			.mcf-input-group{
+				margin-top: 25px;
+			}
+			.mcf-input-group input{
+				margin-top: 15px;
+				width: 100%;
+				border-radius:3px;
+				border: 1px solid #C6C6C6;
+				height: 40px;
+				padding-left: 20px;
+			}
+			
+			.mcf-input-group input:nth-child(6){
+				margin-bottom: 40px;
+			}
+			.progress-bar_wrap {
+				width: 300px;
+				height: 5px;
+				background: #F6F6FA;
+				display: inline-block;
+				vertical-align: middle;
+				overflow: hidden;
+				border-radius: 5px;
+			}
+			.progress-bar_text {
+				display: inline-block;
+				color: #aaa;
+				margin-left: 5px;
+				-webkit-transition: .2s;
+				transition: .2s;
+				/* margin-top: 5px; */
+			}
+			.progress-bar_item {
+				display: inline-block;
+				height: 100%;
+				width: 32.5%;
+				margin-right: .8%;
+				border-radius: 5px;
+				float: left;
+				-webkit-transition: background-color .2s, visisility .1s;
+				transition: background-color .2s, visisility .1s;
+			}
+			.progress-bar_item-1.active {
+				background-color: #FF4B47;
+			}
+
+			.progress-bar_item-2.active {
+				background-color: #F9AE35;
+			}
+
+			.progress-bar_item-3.active {
+				background-color: #2DAF7D;
+			}
+			.mui-input-row .mui-input-password~.mui-icon-eye{
+				top:23px
+			}
+			.text-pwd{
+				color: red;
+				font-size: 12px;
+			}
+		</style>
+
+	</head>
+
+	<body>
+		<div class="mui-content">
+			<div class="top-text">
+				<ul>
+					<li>密码用于保护钱包和交易授权,强度非常重要</li>
+					<li>MCF不存储密码,也无法帮您找回,请务必牢记</li>
+				</ul>
+			</div>
+			<div class="mcf-input-group">
+				<input type="text" id="name" placeholder="钱包名称">
+				<div class="mui-input-row mui-password">
+					<input id="pwd1" type="password" class="mui-input-password" placeholder="密码">
+				</div>
+				<div class="text-pwd">
+					*密码长度为8-24，至少包含数字，大写英文，小写英文和特殊符号中的三种
+				</div>
+				<div class="progress-bar_wrap">
+					<div class="progress-bar_item progress-bar_item-1"></div>
+					<div class="progress-bar_item progress-bar_item-2"></div>
+					<div class="progress-bar_item progress-bar_item-3"></div>
+				</div>
+				<span class="progress-bar_text">空</span>
+				<div class="mui-input-row mui-password">
+					<input id="pwd2" type="password" class="mui-input-password" placeholder="重复密码">
+				</div>
+				<input type="text" id="pwdt" placeholder="密码提示(可不填)">
+				<button id="btnCreate">创建钱包</button>
+				<!-- <button style="background-color: #fff;color: #81C0CF;" onclick="importAsset()">导入钱包</button> -->
+			</div>
+		</div>
+
+		<script src="../../resource/js/tool/mui.min.js"></script>
+		<script src="../../resource/js/tool/jquery.min.js"></script>
+		<script src="../../resource/js/transcode/unorm.js"></script>
+		<script src="../../resource/js/transcode/sjcl-bip39.js"></script>
+		<script src="../../resource/js/transcode/wordlist_chinese_simplified.js"></script>
+		<script src="../../resource/js/transcode/wordlist_chinese_traditional.js"></script>
+		<script src="../../resource/js/transcode/wordlist_english.js"></script>
+		<script src="../../resource/js/transcode/wordlist_french.js"></script>
+		<script src="../../resource/js/transcode/wordlist_italian.js"></script>
+		<script src="../../resource/js/transcode/wordlist_japanese.js"></script>
+		<script src="../../resource/js/transcode/wordlist_korean.js"></script>
+		<script src="../../resource/js/transcode/wordlist_spanish.js"></script>
+		<script src="../../resource/js/transcode/jsbip39.js"></script>
+		<script src="../../resource/js/transcode/nacl_factory.js"></script>
+		<script src="../../resource/js/transcode/crypto-js.js"></script>
+		<script src="../../resource/js/transcode/sha256.js"></script>
+		<script src="../../resource/js/mcf.transcode.js"></script>
+		<script src="../../resource/js/mcf.js"></script>
+		<script type="text/javascript" charset="utf-8">
+			var arr = {
+				"name": $('#name').val(),
+				"pwd": $('#pwd1').val(),
+				"pwdt": $('#pwdt').val(),
+			}
+
+			//mui初始化
+			mui.init({
+				swipeBack: true //启用右滑关闭功能
+			});
+			(function($) {
+				mui.plusReady(function() {
+
+				})
+			})(mui);
+
+			function importAsset() {
+				console.log("导入");
+// 				var ws = plus.webview.currentWebview();
+// 				plus.webview.close(ws);
+				openWindow('../create/import.html');
+			}
+
+
+
+			const changeText = function(el, text, color) {
+				el.text(text).css('color', color);
+			};
+			$("#btnCreate").click(function() {
+				var pwd = $('#pwd1').val();
+				var regex = new RegExp(
+					'^(?![a-zA-Z]+$)(?![A-Z0-9]+$)(?![A-Z\W_!@#$%^&*`~()-+=]+$)(?![a-z0-9]+$)(?![a-z\W_!@#$%^&*`~()-+=]+$)(?![0-9\W_!@#$%^&*`~()-+=]+$)[a-zA-Z0-9\W_!@#$%^&*`~()-+=]{8,24}$'
+				);
+				if ($('#name').val() == "" || $('#pwd1').val() == "" || $('#pwd2').val() == "") {
+					mui.toast('请填写完整');
+					return;
+				}
+				if (!regex.test(pwd)) {
+					mui.toast("输入错误：密码不符合规则，请重新输入。");
+					$("#pwd1").focus();
+					return;
+				}	
+				if ($('#pwd1').val() !== $('#pwd2').val()) {
+					mui.toast('两次密码不相同');
+					return;
+				}
+				if (readStorage("account").length >= 5) {
+					mui.toast('最多可以创建5个钱包');
+					return;
+				}
+				var arr = {
+					"name": $('#name').val(),
+					"pwd": $('#pwd1').val(),
+					"pwdt": $('#pwdt').val(),
+					//"type": 1, //个人账户
+				}
+				nacl_factory.instantiate(function(nacl) {
+					var mnemo = new Mnemonic("english");
+
+					/**随机生成字符串**/
+					var hexStr = nacl.to_hex(nacl.random_bytes(16));
+					var randStr = encode(nacl.from_hex(hexStr));
+
+					/**生成12个助记词**/
+					var code = mnemo.toMnemonic(hexStringToArray(hexStr));
+					arr.words = code;
+
+					/**根据随机字符串返回privateKey**/
+					var privateKeyHex = nacl.to_hex(nacl.crypto_hash_sha256(nacl.from_hex(hexStr)));
+					var privateKey = encode(nacl.from_hex(privateKeyHex)); //base58
+
+					/**根据privateKey生成publicKey**/
+					var kp = nacl.crypto_sign_seed_keypair(nacl.from_hex(privateKeyHex));
+					var publicKey = encode(kp.signPk);
+					// return;
+					/**根据publicKey生成获取地址**/
+					arr.addr = getAccountAddressFromPublicKey(publicKey);
+					arr.prk = privateKey;
+					writeStorage("tempAccount", arr);
+					window.location.href = "backups.html";
+
+				});
+
+			})
+
+
+			$('#pwd1').keyup(function() {
+				var pwd = this.value;
+				var len = this.value.length;
+				var complex = 0;
+				const pbText = $('.progress-bar_text');
+				
+				if (len === 0) {
+					$('.progress-bar_item').each(function() {
+						$(this).removeClass('active')
+					});
+					changeText(pbText, '空');
+				}
+				
+				var regexNum = /[0-9]/g;
+				var regexUpper = /[A-Z]/g;
+				var regexLower = /[a-z]/g;
+				var regexSymbol = /[\W_!@#$%^&*`~()-+=]/g;
+				if (pwd.match(regexNum)) {
+					// console.log("匹配到数字");
+					++complex;
+				}
+				if (pwd.match(regexUpper)) {
+					// console.log("匹配到大写字母");
+					++complex;
+				}
+				if (pwd.match(regexLower)) {
+					// console.log("匹配到小写字母");
+					++complex;
+				}
+				if (pwd.match(regexSymbol)) {
+					// console.log("匹配到特殊符号");
+					++complex;
+				}
+				
+				console.log(complex);
+				
+				// return;
+				if (len === 0) {
+					$('.progress-bar_item').each(function() {
+						$(this).removeClass('active')
+					});
+					changeText(pbText, '空');
+				} else if (complex <= 2 || len < 8) {
+					$('.progress-bar_item-1').addClass('active');
+					$('.progress-bar_item-2').removeClass('active');
+					$('.progress-bar_item-3').removeClass('active');
+					changeText(pbText, '弱');
+				} else if (complex === 3) {
+					$('.progress-bar_item-2').addClass('active');
+					$('.progress-bar_item-3').removeClass('active');
+					changeText(pbText, '中');
+				} else if (complex === 4) {
+					$('.progress-bar_item').each(function() {
+						$(this).addClass('active');
+					});
+					changeText(pbText, '强');
+				}
+			});
+		</script>
+	</body>
+
+</html>

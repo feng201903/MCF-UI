@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>消息中心</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1,user-scalable=no">
+		<meta name="apple-mobile-web-app-capable" content="yes">
+		<meta name="apple-mobile-web-app-status-bar-style" content="black">
+		<!--标准mui.css-->
+		<link rel="stylesheet" href="../../resource/css/mui.min.css">
+		<!--App自定义的css-->
+		<link rel="stylesheet" type="text/css" href="../../resource/css/mcf.app.css" />
+		<style>
+			li {
+				/* height: 400px; */
+				line-height: 25px;
+			}
+
+			.message-recipient {
+				width: 65%;
+				float: left;
+				color: #6C6C6C;
+				font-size: 14px;
+			}
+
+			.message-time {
+				width: 35%;
+				float: right;
+				font-size: 12px;
+			}
+
+			.btn {
+				background-color: #2AC845;
+				margin-top: 5px;
+			}
+		</style>
+	</head>
+
+	<body>
+		<div class="mui-content">
+			<div id="scroll4" class="mui-scroll-wrapper">
+				<div id="slider3" class="mui-slider">
+					<ul class="mui-table-view" style="margin-top: 0px;" id="messageList">
+
+					</ul>
+				</div>
+			</div>
+		</div>
+		<script src="../../resource/js/tool/mui.min.js"></script>
+		<script src="../../resource/js/tool/jquery.min.js"></script>
+		<script src="../../resource/js/tool/axios.min.js"></script>
+		<script src="../../resource/js/transcode/unorm.js"></script>
+		<script src="../../resource/js/transcode/sjcl-bip39.js"></script>
+		<script src="../../resource/js/transcode/wordlist_chinese_simplified.js"></script>
+		<script src="../../resource/js/transcode/wordlist_chinese_traditional.js"></script>
+		<script src="../../resource/js/transcode/wordlist_english.js"></script>
+		<script src="../../resource/js/transcode/wordlist_french.js"></script>
+		<script src="../../resource/js/transcode/wordlist_italian.js"></script>
+		<script src="../../resource/js/transcode/wordlist_japanese.js"></script>
+		<script src="../../resource/js/transcode/wordlist_korean.js"></script>
+		<script src="../../resource/js/transcode/wordlist_spanish.js"></script>
+		<script src="../../resource/js/transcode/jsbip39.js"></script>
+		<script src="../../resource/js/transcode/nacl_factory.js"></script>
+		<script src="../../resource/js/transcode/crypto-js.js"></script>
+		<script src="../../resource/js/transcode/sha256.js"></script>
+		<script src="../../resource/js/mcf.transcode.js"></script>
+		<script src="../../resource/js/mcf.js"></script>
+		<script>
+			var defaultAccount = readStorage("defaultAccount").addr;
+			var htmlLi = "";
+			mui.init({
+				swipeBack: false,
+				// 				beforeback: function() {
+				// 					var web = plus.webview.getWebviewById('page/user.html');
+				// 					mui.fire(web, 'refreshAssets', {
+				// 						msg: "关闭审核",
+				// 					});
+				// 				}
+			});
+
+			(function($) {
+				$('.mui-scroll-wrapper').scroll({
+					indicators: true //是否显示滚动条
+				});
+				mui.plusReady(function() {
+					// getAW();
+				})
+			})(mui);
+
+			checkNewMessage();
+
+			//检查消息
+			function checkNewMessage() {
+				axios.all([getVerify()])
+					.then(axios.spread(function(verify) {
+						console.log(verify.data.length);
+						if (verify.data.length == 0) {
+							$("#messageList").append("无");
+							return;
+						}
+
+						for (var key in verify.data) {
+							var data = JSON.parse(verify.data[key].data);
+							// console.log(data.logo)
+							htmlLi = '<li class="mui-table-view-cell">' +
+								'<p>' + cutAddr(verify.data[key].owner) + '发行了以下资产</p>' +
+								'<p>资产简称:' + verify.data[key].assetName + '</p>' +
+								'<p>资产全称:' + data.full + '</p>' +
+								'<p>资产中文名:' + decodeURIComponent(verify.data[key].description) + '</p>' +
+								'<p>发行总量:' + verify.data[key].quantity + '</p>' +
+								'<p>可分割:' + verify.data[key].isDivisible + '</p>' +
+								'<p>url:' + data.url + '</p>' +
+								'<p>web:' + data.web + '</p>' +
+								'<p>logo:<img src="' + data.logo + '" style="width:30px"></p>' +
+								'<p>简介:' + decodeURIComponent(data.content) + '</p>' +
+								'<p><button class="btn" onclick="toVerify(\'' + verify.data[key].signature + '\')">通过</button></p>' +
+								'</li>';
+							$("#messageList").append(htmlLi);
+						}
+					}));
+			}
+
+
+			//获取待审核记录
+			function getVerify() {
+				return axios.get(API_SERVER + 'transactions/pending?txGroupId=2&limit=100');
+			}
+
+			function toVerify(signature) {
+				nacl_factory.instantiate(function(nacl) {
+					var btnArray = ['取消', '确定'];
+					mui.prompt('', '', '请输入密码：', btnArray, function(e) {
+						if (e.index == 1) {
+							if (e.value) {
+								var pwd = e.value;
+							} else {
+								mui.toast('请输入密码！');
+								return;
+							}
+
+							var txType = '00000021';
+							var timestamp = parseInt(new Date().getTime()).toString(16);
+							timestamp = strAddZero(timestamp, 16);
+							var txGroupId = '00000000';
+							var lastreference = mui_ajax(API_SERVER + 'addresses/' + defaultAccount, "", "get", "json").reference;
+							if (lastreference == "false") {
+								mui.toast('无法获取reference');
+							} else {
+								var reference = nacl.to_hex(decode(lastreference));
+							}
+							var privateKey = checkAddrPwd(defaultAccount, pwd);
+							if (privateKey.error) {
+								mui.toast(privateKey.error);
+								return;
+							} else {
+								var privateKeyHex = nacl.to_hex((decode(privateKey)));
+								var kp = nacl.crypto_sign_seed_keypair(nacl.from_hex(privateKeyHex));
+								var publicKey = encode(kp.signPk);
+							}
+							var spk = nacl.to_hex(decode(publicKey));
+							signature = nacl.to_hex(decode(signature));
+							var fee = strAddZero(parseInt(FEE * 100000000).toString(16), 16);
+							var approval = "01";
+							var signStr = txType + timestamp + txGroupId + reference + spk + signature + approval + fee;
+							signStr = encode(nacl.from_hex(signStr));
+
+							var trBytes = decode(signStr);
+							var kp1 = nacl.crypto_sign_seed_keypair(decode(privateKey));
+							var c = nacl.crypto_sign_detached(trBytes, kp1.signSk);
+							var buffer1 = new Uint8Array(trBytes);
+							var buffer2 = new Uint8Array(c);
+							var tmp = new Uint8Array(buffer1.byteLength + buffer2.byteLength);
+							tmp.set(buffer1, 0);
+							tmp.set(buffer2, buffer1.byteLength);
+
+							var process = mui_ajax(API_SERVER + 'transactions/process', encode(tmp), "post", "text");
+							if (process == "true") {
+								mui.toast("审核成功")
+							} else {
+								mui.toast(process)
+							}
+						}
+					}, 'div')
+					document.querySelector('.mui-popup-input input').type = 'password';
+				})
+			}
+		</script>
+	</body>
+</html>

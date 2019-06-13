@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>行情</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1,user-scalable=no">
+		<meta name="apple-mobile-web-app-capable" content="yes">
+		<meta name="apple-mobile-web-app-status-bar-style" content="black">
+		<!--标准mui.css-->
+		<link rel="stylesheet" href="resource/css/mui.min.css">
+		<!--App自定义的css-->
+		<link rel="stylesheet" type="text/css" href="resource/css/mcf.app.css" />
+	</head>
+
+	<body>
+		<div class="mui-content index-page">
+			<div id="slider" class="mui-slider mui-fullscreen">
+				<div id="sliderSegmentedControl" class="mui-slider-indicator mui-segmented-control mui-segmented-control-inverted">
+					<a class="mui-control-item" href="#item1mobile">自选</a>
+					<a class="mui-control-item" href="#item2mobile">MCF</a>
+				</div>
+				<div id="sliderProgressBar" class="mui-slider-progress-bar mui-col-xs-6"></div>
+				<div class="mui-slider-group">
+					<div id="item1mobile" class="mui-slider-item mui-control-content mui-active">
+						<div class="list-title">
+							<div class="list-title-name">资产名称</div>
+							<div class="list-title-price">价格</div>
+							<div class="list-title-percent">涨跌幅</div>
+						</div>
+						<div id="scroll1" class="mui-scroll-wrapper" style="top:25px">
+							<div class="mui-scroll">
+							</div>
+						</div>
+					</div>
+					<div id="item2mobile" class="mui-slider-item mui-control-content">
+						<div class="list-title">
+							<div class="list-title-name">资产名称</div>
+							<div class="list-title-price">价格</div>
+							<div class="list-title-percent">涨跌幅</div>
+						</div>
+						<div id="scroll2" class="mui-scroll-wrapper" style="top:25px">
+							<div class="mui-scroll">
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div id="topPopover" class="mui-popover">
+				<div class="mui-popover-arrow"></div>
+				<div class="mui-scroll-wrapper">
+					<div class="mui-scroll">
+						<ul class="mui-table-view">
+							<li class="mui-table-view-cell" onclick="setSort('byPrice')"><svg t="1553617427358" class="icon" style=""
+								 viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="5688" xmlns:xlink="http://www.w3.org/1999/xlink"
+								 width="10" height="10">
+									<defs>
+										<style type="text/css"></style>
+									</defs>
+									<path d="M510.64509 0.590718L161.486933 376.814153a1.847185 1.847185 0 0 0 1.345232 3.092028h698.316314a1.847185 1.847185 0 0 0 1.345233-3.092028L513.335555 0.590718a1.827107 1.827107 0 0 0-2.690465 0zM510.64509 1023.409282L161.486933 647.185847a1.847185 1.847185 0 0 1 1.345232-3.092028h698.316314a1.847185 1.847185 0 0 1 1.345233 3.092028l-349.158157 376.223435a1.827107 1.827107 0 0 1-2.690465 0z"
+									 fill="#060001" p-id="5689"></path>
+								</svg>按价格排序</li>
+							<li class="mui-table-view-cell" onclick="setSort('byPercent')"><svg t="1553617427358" class="icon" style=""
+								 viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="5688" xmlns:xlink="http://www.w3.org/1999/xlink"
+								 width="10" height="10">
+									<defs>
+										<style type="text/css"></style>
+									</defs>
+									<path d="M510.64509 0.590718L161.486933 376.814153a1.847185 1.847185 0 0 0 1.345232 3.092028h698.316314a1.847185 1.847185 0 0 0 1.345233-3.092028L513.335555 0.590718a1.827107 1.827107 0 0 0-2.690465 0zM510.64509 1023.409282L161.486933 647.185847a1.847185 1.847185 0 0 1 1.345232-3.092028h698.316314a1.847185 1.847185 0 0 1 1.345233 3.092028l-349.158157 376.223435a1.827107 1.827107 0 0 1-2.690465 0z"
+									 fill="#060001" p-id="5689"></path>
+								</svg>按涨跌幅排序</li>
+						</ul>
+					</div>
+				</div>
+			</div>
+		</div>
+		<script src="resource/js/tool/mui.min.js"></script>
+		<script src="resource/js/tool/jquery.min.js"></script>
+		<script src="resource/js/tool/util.js"></script>
+		<script src="resource/js/tool/axios.min.js"></script>
+		<script src="resource/js/mcf.js"></script>
+		<script>
+			var item1 = document.getElementById('item1mobile'),
+				item2 = document.getElementById('item2mobile')
+
+			mui.init({
+				swipeBack: false
+			});
+			
+			(function($) {
+				$('.mui-scroll-wrapper').scroll({
+					indicators: true //是否显示滚动条
+				});
+				mui.plusReady(function() {
+					var _second = plus.webview.getSecondWebview();
+					_second.setStyle({
+						titleNView: {
+							'titleText': '行情',
+							'padding-right': '10px',
+							buttons: [{
+								text: '\ue600',
+								fontSize: '23px',
+								fontSrc: '_www/resource/fonts/iconfont2.ttf',
+								onclick: toSort
+							}, {
+								text: '\ue611',
+								fontSize: '18px',
+								fontSrc: '_www/resource/fonts/iconfont2.ttf',
+								onclick: toSearch
+							}]
+						}
+					});
+
+					function toSort() {
+						mui('.mui-popover').popover('toggle', document.getElementById("openPopover"));
+					}
+
+					function toSearch() {
+						console.log("搜索..");
+						openWindow('./page/deal/token-search.html', '搜索资产', {
+							backButtonAutoControl: 'none',
+							aniShow: 'slide-in-right',
+						})
+					}
+				});
+				//END mui.plusReady();
+			})(mui);
+
+			var loadItem1 = null,
+				loadItem2 = null;
+
+			var a = function() {
+				// console.log("加载自选列表")
+				var favoriteAssetsInfo = readStorage('favoriteAssetsInfo');
+				loadMarketToList(favoriteAssetsInfo, item1);
+				return a;
+			}
+			loadItem1 = setInterval(a(), 15000);
+
+			var b = function() {
+				// console.log("加载MCF列表")
+				mui.getJSON(API_SERVER+'assets?includeData=true&limit=0&offset=0&reverse=false', '', function(data) {
+					var assetsArr = data;
+					// console.log(data)
+					writeStorage('allAssetsInfo', assetsArr);
+					loadMarketToList(assetsArr, item2);
+				});
+				return b;
+			}
+			b();
+
+			document.getElementById('slider').addEventListener('slide', function(e) {
+				if (e.detail.slideNumber === 1) {
+					window.clearInterval(loadItem1);
+					loadItem2 = setInterval(b(), 15000);
+				} else {
+					window.clearInterval(loadItem2);
+					loadItem1 = setInterval(a(), 15000);
+				}
+			});
+
+			//加载行情列表
+			function loadMarketToList(arrAssetInfo, itemObj) {
+				if (arrAssetInfo.length == 0) {
+					return;
+				}
+				// console.log('加载列表:' + (itemObj == item1 ? "自选列表" : "MCF列表"));
+				axios.all([getTradesRecent(arrAssetInfo, 1), getTradesRecent(arrAssetInfo, 2)])
+					.then(axios.spread(function(recent1, recent2) {
+						recent = recent1.data.concat(recent2.data); //将两组数据汇总
+						var arrAssetRecentInfo = convertedIntoPercent(arrAssetInfo, recent); //计算最新成交价 成长百分比
+						loadToPage(arrAssetRecentInfo, itemObj);
+					}))
+			};
+
+			//生成 API url
+			function urlSplicing(arrAssetInfo, type) {
+				var stringUrl = "",
+					finalUrl = "",
+					urlAssetId = "",
+					urlOtherAssetId = "";
+				for (var key in arrAssetInfo) {
+					urlAssetId += "assetid=" + arrAssetInfo[key].assetId + "&";
+					urlOtherAssetId += "otherassetid=" + arrAssetInfo[key].assetId + "&";
+				}
+				if (type == 1) {
+					finalUrl = API_SERVER + 'assets/trades/recent?' + urlAssetId + 'otherassetid=0&limit=0&reverse=false';
+				} else if (type == 2) {
+					finalUrl = API_SERVER + 'assets/trades/recent?assetid=0&' + urlOtherAssetId + 'limit=0&reverse=false';
+				}
+				return finalUrl;
+			}
+
+			//获取最近交易数据
+			function getTradesRecent(arrAssetInfo, type) {
+				var url = urlSplicing(arrAssetInfo, type);
+				return axios.get(url);
+			}
+
+			// 获取资产最近成交价，涨幅
+			function convertedIntoPercent(arrAssetInfo, recent) {
+				// console.log(readStorage('marketSortRules'));
+				readStorage('marketSortRules') == "" ? sortRules = 'byPrice' : sortRules = readStorage('marketSortRules');
+				// 						console.log(readStorage('marketSortByPriceAscend')== "")
+				// 						console.log(readStorage('marketSortByPercentAscend')== "")
+				readStorage('marketSortByPriceAscend') == "" ? sortByPriceAscend = false :
+					sortByPriceAscend = readStorage('marketSortByPriceAscend');
+				readStorage('marketSortByPercentAscend') == "" ? sortByPercentAscend = false :
+					sortByPercentAscend = readStorage('marketSortByPercentAscend');
+				for (var i = 0, len1 = arrAssetInfo.length; i < len1; i++) {
+					var tempArr = [],
+						recentPrice = 0,
+						recentPercent = 0;
+					if (arrAssetInfo[i].assetId == 0) {
+						continue;
+					}
+					// console.log(arrAssetInfo[i].assetId+"--"+arrAssetInfo[i].name);
+					for (var j = 0, len2 = recent.length; j < len2; j++) {
+						// console.log(recent[j]);
+						if (recent[j].assetId == arrAssetInfo[i].assetId || recent[j].otherAssetId == arrAssetInfo[i].assetId) {
+							tempArr.push(recent[j]);
+						}
+					}
+					tempArr.sort(function(a, b) {
+						return b.timestamp - a.timestamp;
+					});
+					// console.table(tempArr);
+					if (tempArr.length == 1) {
+						//最近买卖交易只有一笔,所以只有最近成交价,没有增长百分比
+						recentPrice = returnPrice(tempArr[0], arrAssetInfo[i].assetId);
+					} else if (tempArr.length >= 2) {
+						//最近买卖交易超过两笔,取前两条计算百分比
+						recentPrice = returnPrice(tempArr[0], arrAssetInfo[i].assetId);
+						var recentPrice2 = returnPrice(tempArr[1], arrAssetInfo[i].assetId); //前一笔交易成交价
+						recentPercent = ((recentPrice - recentPrice2) / recentPrice2);
+					}
+// 					console.log("最新成交价："+recentPrice);
+// 					console.log("涨幅："+recentPercent);
+					arrAssetInfo[i].recentPrice = recentPrice;
+					arrAssetInfo[i].recentPercent = recentPercent;
+				}
+				// console.table(arrAssetInfo);
+				//  						console.log(sortRules)
+				//  						console.log(sortByPriceAscend)
+				//  						console.log(sortByPercentAscend)
+				if (sortRules == "byPrice" && sortByPriceAscend == true) {
+					// console.log("按价格升序");
+					arrAssetInfo.sort(function(a, b) {
+						return a.recentPrice - b.recentPrice;
+					});
+				} else if (sortRules == "byPrice" && sortByPriceAscend == false) {
+					// console.log("按价格降序");
+					arrAssetInfo.sort(function(a, b) {
+						return b.recentPrice - a.recentPrice;
+					});
+				} else if (sortRules == "byPercent" && sortByPercentAscend == true) {
+					// console.log("按涨幅升序");
+					arrAssetInfo.sort(function(a, b) {
+						return a.recentPercent - b.recentPercent;
+					});
+				} else if (sortRules == "byPercent" && sortByPercentAscend == false) {
+					// console.log("按涨幅降序");
+					arrAssetInfo.sort(function(a, b) {
+						return b.recentPercent - a.recentPercent;
+					});
+				}
+				// console.log(JSON.stringify(arrAssetInfo))
+				return arrAssetInfo;
+			}
+
+			//计算成交价
+			function returnPrice(dealInfo, assetId) {
+				// console.log(dealInfo);
+				var price = null;
+				if (dealInfo.assetId == assetId || dealInfo.otherAssetId == 0) {
+					price = dealInfo.otherAmount / dealInfo.amount
+				} else if (dealInfo.assetId == 0 || dealInfo.otherAssetId == assetId) {
+					price = dealInfo.amount / dealInfo.otherAmount
+				}
+				return price;
+			}
+
+			function loadToPage(AssetInfo, itemObj) {
+				var bgcolor = "",
+					htmlList = "",
+					recentPercent = "";
+				for (var i = 0, len = AssetInfo.length; i < len; i++) {
+					bgcolor = "";
+					recentPercent = AssetInfo[i].recentPercent;
+					if (AssetInfo[i].assetId == 0) {
+						continue;
+					}
+					if (AssetInfo[i].recentPercent >= 0) {
+						recentPercent = "+" + (AssetInfo[i].recentPercent * 100).toFixed(2);
+						bgcolor = "bg-green";
+					} else if (AssetInfo[i].recentPercent < 0) {
+						recentPercent = (AssetInfo[i].recentPercent * 100).toFixed(2);
+						bgcolor = "bg-red";
+					} else {
+						bgcolor = "bg-red";
+					}
+
+					if (AssetInfo[i].recentPrice !== '--') {
+						// AssetInfo[i].recentPrice = (AssetInfo[i].recentPrice).toFixed(2)
+						AssetInfo[i].recentPrice = (AssetInfo[i].recentPrice).toFixed(8)
+					}
+					// console.log(JSON.stringify(AssetInfo[i]))
+					// console.log(AssetInfo[i].data)
+					
+					if (AssetInfo[i].data) {
+						var assetInfoDate = JSON.parse(AssetInfo[i].data);
+						if (assetInfoDate.logo) {
+							var logo = assetInfoDate.logo;
+						} else {
+							var logo = "./resource/images/guandiao.png"
+						}
+					
+					} else {
+						var logo = "./resource/images/guandiao.png"
+					}
+					
+// 					if(AssetInfo[i].data!==""){
+// 						var assetData = JSON.parse(AssetInfo[i].data);
+// 						var logo = assetData.logo;
+// 					}else{
+// 						var logo="./resource/images/guandiao.png";
+// 					}
+					// console.log(logo)
+					// var assetData = JSON.parse(AssetInfo[i].data);
+					htmlList += '<li class="mui-table-view-cell">' +
+						'<img src="'+logo+'"/>' +
+						'<div class="token-info">' +
+						'<div class="token-name">' + AssetInfo[i].name + '</div>' +
+						'<div class="token-num">&nbsp;</div>' +
+						'</div><div class="token-increase ' + bgcolor + '">' + recentPercent + '%</div>' +
+						'<div class="token-price">' + AssetInfo[i].recentPrice + '</div>' +
+						'<input type="text" name="aId" value=' + AssetInfo[i].assetId + ' hidden>' +
+						'<input type="text" name="aName" value=' + AssetInfo[i].name + ' hidden></li>';
+				}
+				if (itemObj == item1) {
+					htmlList = '<ul class="mui-table-view list1">' + htmlList + "</ul>";
+				} else {
+					htmlList = '<ul class="mui-table-view list2">' + htmlList + "</ul>";
+				}
+				itemObj.querySelector('.mui-scroll').innerHTML = htmlList;
+				mui.plusReady(function() {
+					var launch = plus.webview.getLaunchWebview();
+					if (itemObj == item1) {
+						mui('.list1').on('tap', 'li', function() {
+							var defaultAssetInfo = searchAssetInfo('id', this.querySelector('input[name="aId"]').getAttribute("value"))
+							writeStorage("defaultAssetInfo", defaultAssetInfo);
+							mui.fire(launch, 'listenEvents', {
+								eventName: 'tapLi',
+								currIndex: 1,
+								msg: "点击列表跳转到交易页面",
+							});
+						});
+					} else {
+						mui('.list2').on('tap', 'li', function() {
+							var defaultAssetInfo = searchAssetInfo('id', this.querySelector('input[name="aId"]').getAttribute("value"))
+							writeStorage("defaultAssetInfo", defaultAssetInfo);
+							mui.fire(launch, 'listenEvents', {
+								eventName: 'tapLi',
+								currIndex: 1,
+								msg: "点击列表跳转到交易页面",
+							});
+						});
+
+					}
+				})
+
+			}
+
+
+
+			function setSort(rules) {
+				writeStorage('marketSortRules', rules);
+				readStorage('marketSortByPriceAscend') == "" ? sortByPriceAscend = false :
+					sortByPriceAscend = readStorage('marketSortByPriceAscend');
+				readStorage('marketSortByPercentAscend') == "" ? sortByPercentAscend = false :
+					sortByPercentAscend = readStorage('marketSortByPercentAscend');
+
+				if (rules == "byPrice") {
+					writeStorage('marketSortByPriceAscend', !sortByPriceAscend);
+				} else {
+					writeStorage('marketSortByPercentAscend', !sortByPercentAscend);
+				}
+				a();
+				b();
+
+				mui('.mui-popover').popover('toggle', document.getElementById("openPopover"));
+			}
+		</script>
+	</body>
+</html>

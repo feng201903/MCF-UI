@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>详情</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1,user-scalable=no">
+		<meta name="apple-mobile-web-app-capable" content="yes">
+		<meta name="apple-mobile-web-app-status-bar-style" content="black">
+		<!--标准mui.css-->
+		<link rel="stylesheet" href="../../resource/css/mui.min.css">
+		<!--App自定义的css-->
+		<link rel="stylesheet" type="text/css" href="../../resource/css/mcf.app.css" />
+		<style>
+			li {
+				height: 80px;
+				line-height: 30px;
+			}
+
+			.mui-table-view:before,
+			.mui-table-view-cell:before,
+			.mui-table-view:after,
+			.mui-table-view-cell:after {
+				height: 0px;
+			}
+
+			.mui-media-body {
+				color: #6C6C6C;
+			}
+
+			.mui-media-body p {
+				color: black;
+			}
+
+			.top {
+				height: 120px;
+				line-height: 120px;
+				background-color: #F2F2F2;
+			}
+
+			.amount {
+				width: 70%;
+				float: left;
+				text-align: right;
+				color: black;
+				font-size: 25px;
+			}
+
+			.name {
+				width: 30%;
+				float: left;
+				font-size: 14px;
+				margin-top: 10px;
+				padding-left: 5px;
+				color: #C6C6C6;
+			}
+		</style>
+	</head>
+
+	<body>
+		<div class="mui-content">
+			<div id="scroll4" class="mui-scroll-wrapper">
+				<div id="slider3" class="mui-slider">
+					<div class="top">
+						<div class="amount" id="amount">&nbsp;</div><span class="name" id="assetName"></span>
+					</div>
+					<ul class="mui-table-view">
+						<li class="mui-table-view-cell mui-media">
+							<div class="mui-media-body">
+								发款方
+								<p class='mui-ellipsis' id='creatorAddress' style="text-decoration:underline" onclick="mcfCopy('creatorAddress')"></p>
+							</div>
+						</li>
+						<li class="mui-table-view-cell mui-media">
+							<div class="mui-media-body">
+								收款方
+								<p class='mui-ellipsis' id='recipient' style="text-decoration:underline" onclick="mcfCopy('recipient')"></p>
+							</div>
+						</li>
+						<li class="mui-table-view-cell mui-media">
+							<div class="mui-media-body">
+								交易手续费
+								<p class='mui-ellipsis' id='fee'></p>
+							</div>
+						</li>
+						<li class="mui-table-view-cell mui-media">
+							<div class="mui-media-body">
+								交易ID
+								<p class='mui-ellipsis' id='signature' style="text-decoration:underline" onclick="mcfCopy('signature')"></p>
+							</div>
+						</li>
+						<li class="mui-table-view-cell mui-media">
+							<div class="mui-media-body">
+								区块
+								<p class='mui-ellipsis' id='blockHeight'></p>
+							</div>
+						</li>
+						<li class="mui-table-view-cell mui-media">
+							<div class="mui-media-body">
+								交易时间
+								<p class='mui-ellipsis' id='time'></p>
+							</div>
+						</li>
+					</ul>
+				</div>
+			</div>
+		</div>
+		<script src="../../resource/js/tool/mui.min.js"></script>
+		<script src="../../resource/js/tool/jquery.min.js"></script>
+		<script src="../../resource/js/tool/axios.min.js"></script>
+		<script src="../../resource/js/tool/clipboard.min.js"></script>
+		<script src="../../resource/js/mcf.js"></script>
+		<script>
+			var signature = getParam('signature');
+
+			mui.getJSON(API_SERVER+'transactions/signature/' + signature, '', function(data) {
+				console.log(JSON.stringify(data));
+
+				$("#creatorAddress").html(data.creatorAddress);
+				$("#creatorAddress").attr("data-clipboard-text", data.creatorAddress);
+				$("#recipient").html(data.recipient);
+				$("#recipient").attr("data-clipboard-text", data.recipient);
+				$("#fee").html(data.fee + "MCF");
+				$("#signature").html(cutAddr(data.signature));
+				$("#signature").attr("data-clipboard-text", data.signature);
+				$("#blockHeight").html(data.blockHeight);
+				$("#time").html(format(data.timestamp));
+				$("#amount").html(data.amount);
+				if(data.type=="PAYMENT"){			
+					$("#assetName").html("MCF");
+				}else{
+					var arr = searchAssetInfo("id", data.assetId)
+					console.log(JSON.stringify(arr));
+					$("#assetName").html(arr.name);
+				}
+				
+			})
+
+
+
+			mui.init({
+				swipeBack: false
+			});
+
+			(function($) {
+				$('.mui-scroll-wrapper').scroll({
+					indicators: true //是否显示滚动条
+				});
+				mui.plusReady(function() {
+					// getAW();
+				})
+			})(mui);
+			
+			function mcfCopy(id) {
+				var clipboard = new ClipboardJS('#'+id);
+				clipboard.on('success', function(e) {
+					mui.toast('已复制');
+					e.clearSelection();
+				});
+			
+				clipboard.on('error', function(e) {
+					alert('error');
+				});
+			}
+		</script>
+	</body>
+</html>

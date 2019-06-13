@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="utf-8">
+		<title>我的资产</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1,user-scalable=no">
+		<meta name="apple-mobile-web-app-capable" content="yes">
+		<meta name="apple-mobile-web-app-status-bar-style" content="black">
+
+		<!--标准mui.css-->
+		<link rel="stylesheet" href="../../resource/css/mui.min.css">
+		<!--App自定义的css-->
+		<link rel="stylesheet" type="text/css" href="../../resource/css/mcf.app.css" />
+		<link rel="stylesheet" type="text/css" href="../../resource/css/percircle.css" />
+	</head>
+
+	<body>
+		<div class="mui-content user-assets-page">
+			<div class="assets-top">
+				<button type="button" class="btnActivate activated" id="btnActivate" hidden="">激活</button>
+				<div class="assets-name">
+					<span id="assetsName"></span>
+					<img src="../../resource/images/edit-btn.png" style="width: 20px;margin-left: 10px;" id="editName" /></div>
+				<div class="assets-addr">
+					<span id="assets-addr"></span>
+					<img src="../../resource/images/copy-btn.png" style="width: 25px; margin-left: 3px;" id="btnCopy"
+					 data-clipboard-text="">
+				</div>
+				<div class="mui-row assets-info">
+					<div class="mui-col-sm-6 mui-col-xs-6">
+						<div class="assets-mcf" id="mcfCount" style="height: 60px;"></div>
+						<div class="assets-text">总资产(MCF)</div>
+					</div>
+					<div class="mui-col-sm-6 mui-col-xs-6" style="text-align: right;">
+						<img src="../../resource/images/add+btn.png" style="margin-top: 50px;margin-right: 15%;width: 30px;" onclick="toTokenList()" />
+					</div>
+				</div>
+				<ul class="mui-table-view btn-box">
+					<li class="mui-table-view-cell mui-row" style="padding:30px 0px;">
+						<div class="mui-col-sm-4 mui-col-xs-4" onclick="openBarcode()">
+							<img src="../../resource/images/asset-btn1.png">
+							<p>扫一扫</p>
+						</div>
+						<div class="mui-col-sm-4 mui-col-xs-4" onclick="toTransfer()">
+							<img src="../../resource/images/asset-btn3.png">
+							<p>转账</p>
+						</div>
+						<div class="mui-col-sm-4 mui-col-xs-4" onclick="showQrcode()">
+							<img src="../../resource/images/asset-btn2.png">
+							<p>收款</p>
+						</div>
+					</li>
+				</ul>
+			</div>
+
+			<div class="mui-scroll-wrapper">
+				<div class="mui-scroll">
+					<ul class="mui-table-view assets-list" id="assetList">
+
+					</ul>
+				</div>
+			</div>
+			<div id="popover" class="mui-popover">
+				<div id="qrcode"></div>
+			</div>
+			<script src="../../resource/js/tool/mui.min.js"></script>
+			<script src="../../resource/js/tool/jquery.min.js"></script>
+			<script src="../../resource/js/tool/clipboard.min.js"></script>
+			<script src="../../resource/js/tool/qrcode.min.js"></script>
+			<script src="../../resource/js/tool/common.js"></script>
+			<script src="../../resource/js/transcode/crypto-js.js"></script>
+			<script src="../../resource/js/transcode/sha256.js"></script>
+			<script src="../../resource/js/transcode/unorm.js"></script>
+			<script src="../../resource/js/transcode/sjcl-bip39.js"></script>
+			<script src="../../resource/js/transcode/wordlist_chinese_simplified.js"></script>
+			<script src="../../resource/js/transcode/wordlist_chinese_traditional.js"></script>
+			<script src="../../resource/js/transcode/wordlist_english.js"></script>
+			<script src="../../resource/js/transcode/wordlist_french.js"></script>
+			<script src="../../resource/js/transcode/wordlist_italian.js"></script>
+			<script src="../../resource/js/transcode/wordlist_japanese.js"></script>
+			<script src="../../resource/js/transcode/wordlist_korean.js"></script>
+			<script src="../../resource/js/transcode/wordlist_spanish.js"></script>
+			<script src="../../resource/js/transcode/jsbip39.js"></script>
+			<script src="../../resource/js/transcode/nacl_factory.js"></script>
+			<script src="../../resource/js/mcf.transcode.js"></script>
+			<script src="../../resource/js/mcf.js"></script>
+			<script>
+				mui.init({
+					swipeBack: false
+				});
+
+				(function($) {
+					$('.mui-scroll-wrapper').scroll({
+						indicators: true //是否显示滚动条
+					});
+					getAssetsBalances();
+					checkActivate();
+
+					window.addEventListener('listenEvents', function(data) {
+						console.log(data.detail.eventName + "/" + data.detail.msg);
+						switch (data.detail.eventName) {
+							case 'closeTokenList':
+								console.log('更新');
+								getAssetsBalances();
+								break;
+						}
+					})
+				})(mui);
+
+				function getAddr() {
+					if (getParam('addr')) {
+						return getParam('addr');
+					} else {
+						var defaultAccount = readStorage('defaultAccount');
+						return defaultAccount.addr;
+					}
+				}
+
+				function getAssetsBalances() {
+					var addr = getAddr();
+					var arrSelected = readStorage(addr + "-addressSelectedAssets");
+					var strAssetsId = '';
+					if (arrSelected.length == 0) {
+						strAssetsId = "&assetid=0";
+					} else {
+						for (var key in arrSelected) {
+							strAssetsId += "&assetid=" + arrSelected[key];
+						}
+					}
+					mui.get(API_SERVER + 'assets/balances?address=' + addr + strAssetsId + '&limit=0', {},
+						function(
+							data) {
+							jQuery("#assetList").html("");
+							for (var key in data) {
+								var assetInfo = searchAssetInfo('id', data[key].assetId);
+								if (assetInfo.data) {
+									var assetInfoDate = JSON.parse(assetInfo.data);
+									if (assetInfoDate.logo) {
+										var logo = assetInfoDate.logo;
+									} else {
+										var logo = "../../resource/images/guandiao.png"
+									}
+								} else {
+									var logo = "../../resource/images/guandiao.png"
+								}
+
+
+								var htmlList = '<li class="mui-table-view-cell mui-row" onclick="toTransferRecord(\'' + addr + '\',\'' + data[
+										key].assetId + '\')">' +
+									'<div class="mui-col-sm-2 mui-col-xs-2"><img src="' + logo + '"></div>' +
+									'<div class="mui-col-sm-3 mui-col-xs-3">' + data[key].assetName + '</div>' +
+									'<div class="mui-col-sm-7 mui-col-xs-7">' + data[key].balance + '</div>' +
+									'</li>';
+								jQuery("#assetList").append(htmlList);
+							}
+						}, 'json');
+
+					mui.get(API_SERVER + 'addresses/balance/' + addr, {}, function(data) {
+						// console.log(data.value);
+						jQuery("#mcfCount").html(data.value)
+					}, 'json');
+					var account = readStorage('account');
+					for (var i = 0, len = account.length; i < len; i++) {
+						if (account[i].addr == addr)
+							jQuery("#assetsName").html(account[i].name);
+					}
+
+					jQuery("#assets-addr").html(cutAddr(addr));
+					jQuery("#btnCopy").attr("data-clipboard-text", addr);
+				}
+
+				function checkActivate() {
+					var addr = getAddr();
+					mui.get(API_SERVER + 'addresses/' + addr, {}, function(data) {
+						if (data.reference && data.defaultGroupId == 0) {
+							console.log("可激活未激活")
+							document.getElementById("btnActivate").removeAttribute("hidden");
+						} else if (data.reference && data.defaultGroupId == 2) {
+							console.log("已激活");
+							document.getElementById("btnActivate").removeAttribute("hidden");
+							$('#btnActivate').attr("disabled", "disabled");
+							$('#btnActivate').html("已激活");
+						}
+					}, 'json');
+				}
+
+				document.getElementById("btnActivate").addEventListener('tap', function(e) {
+					var addr = getAddr();
+					e.detail.gesture.preventDefault(); //修复iOS 8.x平台存在的bug，使用plus.nativeUI.prompt会造成输入法闪一下又没了
+					var btnArray = ['取消', '确定'];
+					mui.prompt('', '', '请输入密码：', btnArray, function(e) {
+						if (e.index == 1) {
+							if (e.value) {
+								var pwd = e.value;
+							} else {
+								mui.toast('请输入密码！');
+								return;
+							}
+							nacl_factory.instantiate(function(nacl) {
+								var privateKey = checkAddrPwd(addr, pwd);
+								if (privateKey.error) {
+									mui.toast(privateKey.error);
+									return;
+								} else {
+									var privateKeyHex = nacl.to_hex((decode(privateKey)));
+									var kp = nacl.crypto_sign_seed_keypair(nacl.from_hex(privateKeyHex));
+									var publicKey = encode(kp.signPk);
+								}
+								var timestamp = parseInt(new Date().getTime()).toString(16);
+								timestamp = strAddZero(timestamp, 16);
+								var lastreference = mui_ajax(API_SERVER + 'addresses/' + addr, "", "get", "json").reference;
+								if (lastreference == "false") {
+									mui.toast('无法获取reference');
+									return;
+								} else {
+									var reference = nacl.to_hex(decode(lastreference));
+								}
+								var fee = strAddZero(parseInt(FEE * 100000000).toString(16), 16);
+								var spk = nacl.to_hex(decode(publicKey));
+								var head = '0000001f';
+								var txGroupId = '00000000';
+								var groupId = '00000002'
+								var signStr = head + timestamp + txGroupId + reference + spk + groupId + fee;
+								signStr = encode(nacl.from_hex(signStr));
+								var trBytes = decode(signStr);
+								var kp1 = nacl.crypto_sign_seed_keypair(decode(privateKey));
+								var c = nacl.crypto_sign_detached(trBytes, kp1.signSk);
+								var buffer1 = new Uint8Array(trBytes);
+								var buffer2 = new Uint8Array(c);
+								var tmp = new Uint8Array(buffer1.byteLength + buffer2.byteLength);
+								tmp.set(buffer1, 0);
+								tmp.set(buffer2, buffer1.byteLength);
+								// return;
+								var process = mui_ajax(API_SERVER + 'transactions/process', encode(tmp), "post", "text");
+								if (process == "true") {
+									mui.alert(' ', '激活成功', function() {
+
+									});
+								} else {
+									process = JSON.parse(process);
+									mui.alert('请稍后重试:' + process.message, '激活失败:' + process.error, function() {
+										//window.location.reload();
+									});
+								}
+
+							});
+						} else {
+
+						}
+					}, 'div')
+					document.querySelector('.mui-popup-input input').type = 'password';
+				});
+
+				document.getElementById("editName").addEventListener('tap', function(e) {
+					var addr = getAddr();
+					e.detail.gesture.preventDefault(); //修复iOS 8.x平台存在的bug，使用plus.nativeUI.prompt会造成输入法闪一下又没了
+					var btnArray = ['取消', '确定'];
+					mui.prompt('', '', '请输入新名称：', btnArray, function(e) {
+						if (e.index == 1) {
+							if (e.value) {
+								var newName = e.value;
+							} else {
+								mui.toast('请输入新名称！');
+								return;
+							}
+
+							var defaultAccount = readStorage("defaultAccount");
+							if (defaultAccount.addr == addr) {
+								defaultAccount.name = newName;
+								writeStorage("defaultAccount", defaultAccount);
+							}
+
+							var arrAccount = readStorage("account");
+							for (var key in arrAccount) {
+								if (arrAccount[key].addr == addr) {
+									console.log(arrAccount[key].name);
+									arrAccount[key].name = newName;
+								}
+							}
+							writeStorage("account", arrAccount);
+							getAssetsBalances();
+							var web = plus.webview.getWebviewById('./user/wallet.html');
+							mui.fire(web, 'listenEvents', {
+								msg: "改名",
+								eventName: 'updateAccountInfo'
+							});
+						} else {
+
+						}
+					}, 'div')
+					// document.querySelector('.mui-popup-input input').type = 'password';
+				});
+
+				function toTransferRecord(addr, assetId) {
+					// alert("测试弹窗：点击了"+searchAssetInfo('id',assetId).name+",将跳转转账记录页面")
+					openWindow("transfer-record.html?addr=" + addr + "&assetId=" + assetId, searchAssetInfo('id', assetId).name)
+				}
+
+				function toTransfer() {
+					var addr = getAddr();
+					openWindow("transfer.html?fromaddr=" + addr, "转账")
+				}
+
+				function toTokenList() {
+					var addr = getAddr();
+					openWindow("token-list.html?addr=" + addr, "添加资产", {
+						aniShow: "fade-in"
+					})
+				}
+
+
+
+				// 打开二维码扫描界面 
+				function openBarcode() {
+					createWithoutTitle('barcode_scan.html?fromaddr=' + getParam("addr"), {
+						titleNView: {
+							type: 'float',
+							backgroundColor: 'rgba(215,75,40,0.3)',
+							titleText: '扫一扫',
+							titleColor: '#FFFFFF',
+							autoBackButton: true,
+						}
+					});
+				}
+
+				//显示二维码
+				function showQrcode() {
+					document.getElementById("qrcode").innerHTML = "";
+					console.log(getParam("addr"));
+					getParam("addr") ? addr = getParam("addr") : addr = readStorage("defaultAccount").addr;
+					// var addr =getParam("addr")?;
+					// readStorage("defaultAccount").addr
+					console.log(addr)
+					var qrcode = new QRCode("qrcode", {
+						text: addr,
+						width: 200,
+						height: 200,
+						colorDark: "#000000",
+						colorLight: "#ffffff",
+						correctLevel: QRCode.CorrectLevel.H
+					});
+					mui('.mui-popover').popover('toggle', document.getElementById("openPopover"));
+					// qrcode.clear(); 
+				}
+
+				var clipboard = new ClipboardJS('#btnCopy');
+				clipboard.on('success', function(e) {
+					mui.toast('已复制');
+					e.clearSelection();
+				});
+
+				clipboard.on('error', function(e) {
+					alert('error');
+				});
+			</script>
+	</body>
+</html>

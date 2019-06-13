@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="utf-8">
+		<title>备份助记词</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1,user-scalable=no">
+		<meta name="apple-mobile-web-app-capable" content="yes">
+		<meta name="apple-mobile-web-app-status-bar-style" content="black">
+
+		<!--标准mui.css-->
+		<link rel="stylesheet" href="../../resource/css/mui.min.css">
+		<!--App自定义的css-->
+		<link rel="stylesheet" type="text/css" href="../../resource/css/mcf.app.css" />
+		<style>
+			.mui-content{
+				background-color: #FFF;
+				padding: 0px 5%;
+			}
+			.top-text span{
+				display: block;
+				
+				margin: 15px 0;
+			}
+			.top-text .text1{
+				margin-top: 60px;
+				font-weight: 600;
+				text-align: center;
+			}
+			.top-text .text2{
+				margin-top: 10px;
+				color: #C6C6C6;
+				font-size: 16px;
+			}
+			.top-text .text3{
+				margin-top: 35px;
+				background-color: #C8C8C8;
+				color: #FFF;
+				font-size: 16px;
+				padding: 20px 3%;
+				font-weight: 600;
+				border-radius: 3px;
+				height: 100px;
+			}
+			.mcf-input-group{
+				margin-top: 30px;
+			}
+			.words span{
+				display: block;
+				padding: 5px 10px;
+				float: left;
+			}
+		</style>
+
+	</head>
+
+	<body>
+		<div class="mui-content">
+			<div class="top-text">
+				<span class="text1">确认你的钱包助记词</span>
+				<span class="text2">请按顺序点击助记词,以确认你的备份助记词正确.</span>
+				<span class="text3"></span>
+			</div>
+			<div class="words" style="height: 100px;">
+				
+			</div>
+			<div class="clear"></div>
+			<div class="mcf-input-group">
+				<button id="btnConfirm1">确认</button>
+				<button id="btnConfirm2">重置</button>
+			</div>
+		</div>
+
+		<script src="../../resource/js/tool/mui.min.js"></script>
+		<script src="../../resource/js/tool/jquery.min.js"></script>
+		<script src="../../resource/js/transcode/crypto-js.js"></script>
+		<script src="../../resource/js/transcode/sha256.js"></script>
+		<script src="../../resource/js/mcf.transcode.js"></script>
+		<script src="../../resource/js/mcf.js"></script>
+		<script type="text/javascript" charset="utf-8">
+			var words = readStorage("tempAccount").words;
+			//mui初始化
+			mui.init({
+				swipeBack: true //启用右滑关闭功能
+			});
+
+			(function($) {
+				mui.plusReady(function() {
+
+				})
+
+				var arrWords = words.trim().split(" ");
+				arrWords.sort(function() {
+					return .5 - Math.random();
+				});
+				for (var key in arrWords) {
+					jQuery(".words").append("<span class='words-" + arrWords[key] + "'>" + arrWords[key] + "</span>");
+				}
+				jQuery(".words > span").click(function() {
+					var e = "words-" + jQuery(this).html();
+					jQuery("." + e + ":first").remove();
+					jQuery(".text3").append(jQuery(this).html() + " ");
+				});
+			})(mui);
+
+
+
+			document.getElementById("btnConfirm1").addEventListener('tap', function(e) {
+				var wordsText3 = $.trim($(".text3").html());
+				if (wordsText3 == words) {
+					e.detail.gesture.preventDefault(); //修复iOS 8.x平台存在的bug，使用plus.nativeUI.prompt会造成输入法闪一下又没了
+					var btnArray = ['取消', '确定'];
+					mui.confirm('你备份的助记词顺序验证正确,是否从MC Family移除去该助记词？', '验证成功', btnArray, function(e) {
+						if (e.index == 1) {
+							var accountData = readStorage("account");
+							tempAcc = readStorage("tempAccount");
+							code = cryptoEncrypt(tempAcc.prk, tempAcc.pwd);
+							var arr = {
+								"name": tempAcc.name,
+								"pwdt": tempAcc.pwdt,
+								"addr": tempAcc.addr,
+								"code": code,
+							};
+							if (accountData.length == 0) {
+								writeStorage("defaultAccount", arr);
+								var deal = plus.webview.getWebviewById('./user/deal.html');
+								mui.fire(deal, 'listenEvents', {
+									eventName: "defaultAccountSuccess",
+									msg: "默认钱包变更",
+								});
+							}
+							accountData.push(arr);
+							writeStorage("account", accountData);
+							writeStorage("tempAccount", "");
+
+							var wallet = plus.webview.getWebviewById('./user/wallet.html');
+							mui.fire(wallet, 'listenEvents', {
+								eventName: "createAddressSuccess",
+								msg: "钱包创建成功，关闭页面，刷新钱包列表",
+							});
+							var ws = plus.webview.currentWebview();
+							plus.webview.close(ws);
+						} else {
+
+						}
+					})
+				} else {
+					mui.alert('请检查你的助记词', '备份失败', function() {
+						window.location.reload();
+					});
+				}
+
+			});
+
+			document.getElementById("btnConfirm2").addEventListener('tap', function() {
+				window.location.reload();
+			});
+		</script>
+	</body>
+
+</html>

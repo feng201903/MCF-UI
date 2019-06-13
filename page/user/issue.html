@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="utf-8">
+		<title>我的钱包</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1,user-scalable=no">
+		<meta name="apple-mobile-web-app-capable" content="yes">
+		<meta name="apple-mobile-web-app-status-bar-style" content="black">
+
+		<!--标准mui.css-->
+		<link rel="stylesheet" type="text/css" href="../../resource/css/mui.min.css">
+		<!--App自定义的css-->
+		<link rel="stylesheet" type="text/css" href="../../resource/css/mcf.app.css" />
+		<style type="text/css">
+			.mui-content {
+				background-color: white;
+				text-align: center;
+				padding: 150px 10%;
+			}
+
+			.mcf-url {
+				color: #007AFF;
+				text-decoration: underline
+			}
+		</style>
+	</head>
+
+	<body>
+		<div class="mui-content">
+			<h4>批量转账、空投以及锁仓功能（锁仓功能在第二版本开放）</h4>
+			<h4>请到<span class="mcf-url" id="btnCopy" data-clipboard-text="https://www.mcfamily.io">https://www.mcfamily.io</span>操作</h4>
+		</div>
+
+	</body>
+
+	<script src="../../resource/js/tool/mui.min.js"></script>
+	<script src="../../resource/js/tool/clipboard.min.js"></script>
+	<script src="../../resource/js/tool/jquery.min.js"></script>
+	<script>
+		var clipboard = new ClipboardJS('#btnCopy');
+		clipboard.on('success', function(e) {
+			mui.toast('已复制');
+			e.clearSelection();
+		});
+
+		clipboard.on('error', function(e) {
+			alert('error');
+		});
+	</script>
+
+</html>

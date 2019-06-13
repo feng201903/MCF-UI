@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="utf-8">
+		<title>联系人</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1,user-scalable=no">
+		<meta name="apple-mobile-web-app-capable" content="yes">
+		<meta name="apple-mobile-web-app-status-bar-style" content="black">
+
+		<!--标准mui.css-->
+		<link rel="stylesheet" href="../../resource/css/mui.min.css">
+		<!--App自定义的css-->
+		<link rel="stylesheet" type="text/css" href="../../resource/css/mcf.app.css" />
+		<link rel="stylesheet" type="text/css" href="../../resource/css/percircle.css" />
+	</head>
+
+	<body>
+		<style>
+			.mui-content{
+				background-color: #FFF;
+				padding:0 5%;
+			}
+			/* .mui-table-view:before,
+			.mui-table-view:after,
+			.mui-table-view-cell:after{
+				height: 0px;
+			} */
+			.mui-table-view-cell{
+				height: 80px;
+				line-height: 50px;
+			}
+			.mui-table-cell>div{
+				height: 30px;
+				line-height: 30px;
+			}
+			.mui-table-cell>div:last-child{
+				color: #6C6C6C;
+			}
+			.mcf-btn{
+				position: fixed;
+				bottom: 5px;
+				left: 0px;
+				height: 50px;
+			}
+		</style>
+		<div class="mui-content">
+			<ul id="OA_task_2" class="mui-table-view">
+
+			</ul>
+			<button class="mcf-btn" onclick="toAdd()">添加联系人</button>
+		</div>
+
+		<script src="../../resource/js/tool/mui.min.js"></script>
+		<script src="../../resource/js/tool/jquery.min.js"></script>
+		<script src="../../resource/js/tool/common.js"></script>
+		<script src="../../resource/js/mcf.js"></script>
+		<script type="text/javascript">
+			var contactsData = readStorage("contacts");
+			mui.init({
+				swipeBack: false
+			});
+			(function($) {
+				for (var key in contactsData) {
+					var strHtml =
+						'<li class="mui-table-view-cell" onclick="toTransfer(\'' +
+						contactsData[key].addr +
+						'\')"><div class="mui-slider-right mui-disabled"><a class="mui-btn mui-btn-blue" onclick="editContacts(\'' +
+						contactsData[key].name + '\',\'' + contactsData[key].addr +
+						'\')">编辑</a><a class="mui-btn mui-btn-red" onclick="delContacts(\'' + contactsData[key].name + '\',\'' +
+						contactsData[key].addr +
+						'\')">删除</a></div><div class="mui-slider-handle"><div class="mui-table-cell" ><div>' + contactsData[key].name +
+						'</div><div>' + cutAddr(contactsData[key].addr) +
+						'</div></div></div></li>';
+					jQuery("#OA_task_2").append(strHtml);
+				}
+
+				// 				mui.plusReady(function(){
+				// 					var wvs = plus.webview.all();
+				// 					for (var i = 0; i < wvs.length; i++) {
+				// 						console.log('webview' + i + ': ' + wvs[i].id);
+				// 					}
+				// 				})
+
+			})(mui);
+
+			$(document).on('click', '.form-group .controlA', function(event) {
+				event.stopPropagation(); //停止事件冒泡
+				console.log("详情事件..");
+			});
+
+			function toAdd() {
+				openWindow("contacts-add.html?fromaddr=" + getParam("fromaddr"), "添加联系人");
+			}
+
+			function toTransfer(addr) {
+				if (getParam("fromaddr")) {
+					openWindow("transfer.html?fromaddr=" + getParam("fromaddr") + "&toaddr=" + addr);
+				}
+			}
+
+			function editContacts(name, addr) {
+				event.stopPropagation(); //停止事件冒泡
+				openWindow("contacts-edit.html?name=" + name + "&addr=" + addr, "编辑联系人");
+// 				var e = (evt) ? evt : window.event;
+// 				if(window.event) {
+// 					e.cancelBubble = true; // ie下阻止冒泡
+// 				} else {
+// 					//e.preventDefault();
+// 					e.stopPropagation(); // 其它浏览器下阻止冒泡
+// 
+// 				}
+			}
+
+			function delContacts(name, addr) {
+				var contactsData = readStorage("contacts");
+				for (var key in contactsData) {
+					if (contactsData[key].name == name && contactsData[key].addr == addr) {
+						contactsData.splice(key, 1);
+					}
+				}
+				writeStorage("contacts", contactsData);
+				window.location.reload();
+			}
+		</script>
+	</body>
+</html>

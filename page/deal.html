@@ -1,0 +1,1204 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="utf-8">
+		<title>Hello MUI</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1,user-scalable=no">
+		<meta name="apple-mobile-web-app-capable" content="yes">
+		<meta name="apple-mobile-web-app-status-bar-style" content="black">
+
+		<!--标准mui.css-->
+		<link rel="stylesheet" href="../resource/css/mui.min.css">
+		<!--App自定义的css-->
+		<link rel="stylesheet" type="text/css" href="../resource/css/mcf.app.css" />
+		<link rel="stylesheet" type="text/css" href="../resource/css/percircle.css" />
+	</head>
+
+	<body>
+
+		<style>
+			.mui-pull-top-tips {
+				position: absolute;
+				top: -20px;
+				left: 50%;
+				margin-left: -25px;
+				width: 40px;
+				height: 40px;
+				border-radius: 100%;
+				z-index: 1;
+			}
+			
+			.mui-pull-top-wrapper {
+				width: 42px;
+				height: 42px;
+				display: block;
+				text-align: center;
+				background-color: #efeff4;
+				border: 1px solid #ddd;
+				border-radius: 25px;
+				background-clip: padding-box;
+				box-shadow: 0 4px 10px #bbb;
+				overflow: hidden;
+			}
+			
+			.mui-pull-top-tips.mui-transitioning {
+				-webkit-transition-duration: 200ms;
+				transition-duration: 200ms;
+			}
+			
+			.mui-pull-top-canvas canvas {
+				width: 40px;
+			}
+			.input-box1 span{position:absolute;right:55%; top: 30px;width: 60px; overflow: hidden;white-space: nowrap;}
+			.hh{height: 100px;}
+		</style>
+		<div class="mui-content deal-page">
+			<div id="slider" class="mui-slider mui-fullscreen">
+				<div id="sliderSegmentedControl" class="mui-slider-indicator mui-segmented-control mui-segmented-control-inverted">
+					<a class="mui-control-item" href="#item1mobile">买入</a>
+					<a class="mui-control-item" href="#item2mobile">卖出</a>
+					<a class="mui-control-item" href="#item3mobile">委托未成交单</a>
+					<a class="mui-control-item" href="#item4mobile">已成交明细</a>
+				</div>
+				<div id="sliderProgressBar" class="mui-slider-progress-bar mui-col-xs-3"></div>
+				<div class="mui-slider-group">
+					<div id="item1mobile" class="mui-slider-item mui-control-content mui-active">
+						<div id="scroll1" class="mui-scroll-wrapper">
+							<div class="mui-scroll">
+								<div class="buy-left">
+									<div class="input-box1">
+										<input type="text" placeholder="委托价格" id="buyPrice" onkeyup='clearNoNum(this,8)'>
+										<span>MCF</span>
+									</div>
+									<div class="input-box">
+										<input type="text" placeholder="委托数量" id="buyAmount" onkeyup="if(this.value.length==1){this.value=this.value.replace(/[^1-9]/g,'')}else{this.value=this.value.replace(/\D/g,'')}"
+										 onafterpaste="if(this.value.length==1){this.value=this.value.replace(/[^1-9]/g,'')}else{this.value=this.value.replace(/\D/g,'')}"><span
+										 class="asset-name"></span>
+									</div>
+									<ul class="mui-table-view">
+										<li class="mui-table-view-cell"><span>可买</span><span class="asset-name"></span><span id="canBuy">0.00</span></li>
+										<li class="mui-table-view-cell"><span>交易额</span><span>MCF</span><span id="buyTurnover">0.00</span></li>
+										<li class="mui-table-view-cell"><span>手续费</span><span>0.00001MCF</span></li>
+										<li class="mui-table-view-cell"><button class="mcf-btn mcf-btn-green" onclick="initiate('buy')">买入</button></li>
+										<li class="mui-table-view-cell"><span>可用</span><span>MCF</span><span class="mcf-balance">0.00</span></li>
+										<li class="mui-table-view-cell"><span>可用</span><span class="asset-name"></span><span class="deal-balance">0.00</span></li>
+									</ul>
+								</div>
+								<div class="buy-right">
+									<div style="height: 25px;">
+										<div class="order-title-price">价格</div>
+										<div class="order-title-num">数量</div>
+									</div>
+									<div class="order-type1">
+										<ul class="mui-table-view">
+										</ul>
+									</div>
+									<div class="buy-price-info" style="color: #3DB97B;padding: 5px;">
+										<span class="recent-price">--</span>
+										<span style="float: right;" class="recent-increase">--%</span>
+									</div>
+									<div style="height: 25px;">
+										<div class="order-title-price">价格</div>
+										<div class="order-title-num">数量</div>
+									</div>
+									<div class="order-type2">
+										<ul class="mui-table-view">
+
+										</ul>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div id="item2mobile" class="mui-slider-item mui-control-content">
+						<div id="scroll2" class="mui-scroll-wrapper">
+							<div class="mui-scroll">
+								<div class="buy-left">
+									<div class="input-box1">
+										<input type="text" placeholder="委托价格" id="sellPrice" onkeyup='clearNoNum(this,8)'>
+										<span>MCF</span>
+									</div>
+									<div class="input-box">
+										<input type="text" placeholder="委托数量" id="sellAmount" onkeyup="if(this.value.length==1){this.value=this.value.replace(/[^1-9]/g,'')}else{this.value=this.value.replace(/\D/g,'')}"
+										 onafterpaste="if(this.value.length==1){this.value=this.value.replace(/[^1-9]/g,'')}else{this.value=this.value.replace(/\D/g,'')}"><span
+										 class="asset-name"></span>
+									</div>
+									<ul class="mui-table-view">
+										<li class="mui-table-view-cell"><span>可卖</span><span class="asset-name"></span><span id="canSell">0.00</span></li>
+										<li class="mui-table-view-cell"><span>交易额</span><span>MCF</span><span id="sellTurnover">0.00</span></li>
+										<li class="mui-table-view-cell"><span>手续费</span><span>0.00001MCF</span></li>
+										<li class="mui-table-view-cell"><button class="mcf-btn mcf-btn-red" onclick="initiate('sell')">卖出</button></li>
+										<li class="mui-table-view-cell"><span>可用</span><span>MCF</span><span class="mcf-balance">0.00</span></li>
+										<li class="mui-table-view-cell"><span>可用</span><span class="asset-name"></span><span class="deal-balance">0.00</span></li>
+									</ul>
+								</div>
+								<div class="buy-right">
+									<div style="height: 25px;">
+										<div class="order-title-price">价格</div>
+										<div class="order-title-num">数量</div>
+									</div>
+									<div class="order-type1">
+										<ul class="mui-table-view">
+
+										</ul>
+									</div>
+									<div class="buy-price-info" style="color: #3DB97B;padding: 5px;">
+										<span class="recent-price">--</span>
+										<span style="float: right;" class="recent-increase">--%</span>
+									</div>
+									<div style="height: 25px;">
+										<div class="order-title-price">价格</div>
+										<div class="order-title-num">数量</div>
+									</div>
+									<div class="order-type2">
+										<ul class="mui-table-view">
+
+										</ul>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div id="item3mobile" class="mui-slider-item mui-control-content">
+						<div id="scroll3" class="mui-scroll-wrapper">
+							<div id="slider3" class="mui-slider mui-fullscreen">
+								<div id="" class="mui-slider-indicator mui-segmented-control mui-segmented-control-inverted">
+									<a class="mui-control-item" href="#item31mobile">买入</a>
+									<a class="mui-control-item" href="#item32mobile">卖出</a>
+								</div>
+								<div id="" class="mui-slider-progress-bar mui-col-xs-6"></div>
+								<div class="mui-slider-group">
+									<div id="item31mobile" class="mui-slider-item mui-control-content mui-active">
+										<div id="scroll31" class="mui-scroll-wrapper">
+											<div class="mui-scroll">
+												<ul class="mui-table-view" id="unBuy">
+
+												</ul>
+											</div>
+										</div>
+									</div>
+									<div id="item32mobile" class="mui-slider-item mui-control-content">
+										<div id="scroll32" class="mui-scroll-wrapper">
+											<div class="mui-scroll">
+												<ul class="mui-table-view" id="unSell">
+
+												</ul>
+											</div>
+										</div>
+
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div id="item4mobile" class="mui-slider-item mui-control-content">
+						<div id="scroll4" class="mui-scroll-wrapper">
+							<div id="slider4" class="mui-slider mui-fullscreen">
+								<div id="" class="mui-slider-indicator mui-segmented-control mui-segmented-control-inverted">
+									<a class="mui-control-item" href="#item41mobile">买入</a>
+									<a class="mui-control-item" href="#item42mobile">卖出</a>
+								</div>
+								<div id="" class="mui-slider-progress-bar mui-col-xs-6"></div>
+								<div class="mui-slider-group" id="mui-slider-group44">
+									<div id="item41mobile" class="mui-slider-item mui-control-content mui-active">
+										<div id="scroll41" class="mui-scroll-wrapper">
+											<div class="mui-scroll">
+												<ul class="mui-table-view" id="finishedBuy">
+
+												</ul>
+											</div>
+										</div>
+									</div>
+									<div id="item42mobile" class="mui-slider-item mui-control-content">
+										<div id="scroll42" class="mui-scroll-wrapper">
+											<div class="mui-scroll">
+												<ul class="mui-table-view" id="finishedSell">
+
+												</ul>
+											</div>
+										</div>
+									</div>
+								</div>
+
+							</div>
+							<div style="position: fixed;bottom: 20px;width: 100%;padding: 0px 4%;color: #6C6C6C;opacity: 0.7;z-index: 99999;">
+								由于所有的交易均在基于MCF的公链上完成,所以APP端仅显示五条记录,如有更多查询需求请复制交易钱包地址到网页版区块链浏览器查询<span class="mcf-url" id="btnCopy"
+								 data-clipboard-text="https://www.mcfamily.io">https://www.mcfamily.io</span>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<script src="../resource/js/a/mui.min.js"></script>
+		<script src="../resource/js/tool/mui.pullToRefresh.js"></script>
+		<script src="../resource/js/tool/mui.pullToRefresh.material.js"></script>
+		<script src="../resource/js/tool/common.js"></script>
+		<script src="../resource/js/tool/jquery.min.js"></script>
+		<script src="../resource/js/tool/axios.min.js"></script>
+		<script src="../resource/js/tool/percircle.js"></script>
+		<script src="../resource/js/tool/clipboard.min.js"></script>
+		<script src="../resource/js/tool/math.min.js"></script>
+		<script src="../resource/js/transcode/unorm.js"></script>
+		<script src="../resource/js/transcode/sjcl-bip39.js"></script>
+		<script src="../resource/js/transcode/wordlist_chinese_simplified.js"></script>
+		<script src="../resource/js/transcode/wordlist_chinese_traditional.js"></script>
+		<script src="../resource/js/transcode/wordlist_english.js"></script>
+		<script src="../resource/js/transcode/wordlist_french.js"></script>
+		<script src="../resource/js/transcode/wordlist_italian.js"></script>
+		<script src="../resource/js/transcode/wordlist_japanese.js"></script>
+		<script src="../resource/js/transcode/wordlist_korean.js"></script>
+		<script src="../resource/js/transcode/wordlist_spanish.js"></script>
+		<script src="../resource/js/transcode/jsbip39.js"></script>
+		<script src="../resource/js/transcode/nacl_factory.js"></script>
+		<script src="../resource/js/transcode/crypto-js.js"></script>
+		<script src="../resource/js/transcode/sha256.js"></script>
+		<script src="../resource/js/mcf.transcode.js"></script>
+		<script src="../resource/js/mcf.js"></script>
+		<script src="../resource/js/tool/debugout.js"></script>
+		<script>
+			mui.init({
+				swipeBack: false
+			});
+
+			math.config({
+				number: 'BigNumber'
+			});
+
+			document.title = '\u200E'; //设置title空白
+			var defaultAssetInfo = null; //默认资产信息
+
+			var unfinishedLimit = 10; //未成交订单单页加载条数
+			var unfinishedPageBuy = 1; //未成交订单买单页数
+			var unfinishedPageSell = 1; //未成交订单卖单页数
+			var setDefaultBuyPrice = false; //判断是否加载过默认买价
+			var setDefaultSellPrice = false; //判断是否加载过默认卖价
+			console.log($(window).height());
+
+			// document.getElementById("scroll41").style.height=$(window).height()-180+"px";  
+			// document.getElementById("scroll41").style.backgroundColor="#ff0000";
+			// document.getElementById("scroll42").style.height=$(window).height()-180+"px";  
+			// document.getElementById("scroll42").style.backgroundColor="#ff0000"; 
+			document.getElementById("item41mobile").style.height = $(window).height() - 180 + "px";
+			document.getElementById("item42mobile").style.height = $(window).height() - 180 + "px";
+			// $("#item41mobile").css("height",$(window).height()-180);
+			// $("#item42mobile").css("height",$(window).height()-180);
+			if (localStorage.getItem("defaultAssetInfo") == "undefined" || !(localStorage.getItem("defaultAssetInfo"))) {
+				if (readStorage('allAssetsInfo').length > 0) {
+					defaultAssetInfo = searchAssetInfo('id', 1);
+				} else {
+					defaultAssetInfo = mui_ajax(API_SERVER + 'assets/info?assetId=1', "", "get", "json")
+				}
+				writeStorage("defaultAssetInfo", defaultAssetInfo);
+			} else {
+				defaultAssetInfo = readStorage("defaultAssetInfo");
+
+			}
+			// 			defaultAssetInfo = searchAssetInfo('id', 44);
+			// 			writeStorage("defaultAssetInfo", defaultAssetInfo);
+			$(".asset-name").html(defaultAssetInfo.name);
+
+			(function($) {
+				$('.mui-scroll-wrapper').scroll({
+					indicators: true, //是否显示滚动条
+				});
+
+				loadDealInfo();
+				loadBasicInfo();
+				loadFinishedInfo();
+				loadUnfinishedInfo();
+				window.setInterval(function() {
+					// console.log("页面刷新")
+					loadDealInfo();
+					loadBasicInfo();
+					// loadFinishedInfo();
+					// loadUnfinishedInfo();
+				}, 10000);
+
+				window.addEventListener('listenEvents', function(data) {
+					console.log(data.detail.eventName + "/" + data.detail.msg);
+					switch (data.detail.eventName) {
+						case 'defaultAccountChange':
+							loadFinishedInfo();
+							loadUnfinishedInfo();
+							break;
+					}
+				})
+
+				mui.plusReady(function() {
+					var ws = plus.webview.getWebviewById('page/deal.html');
+					plus.key.removeEventListener('backbutton', backListener);
+					checkFavoriteAssets(defaultAssetInfo.assetId) ? favoriteColor = 'blue' : favoriteColor = '';
+					ws.setStyle({
+						titleNView: {
+							'padding-right': '10px',
+							buttons: [{
+								text: '\ue6de',
+								fontSize: '25px',
+								fontSrc: '_www/resource/fonts/iconfont2.ttf',
+								onclick: toAssetDetail
+							}, {
+								type: 'favorite',
+								redDot: false,
+								width: 'auto',
+								color: favoriteColor,
+								onclick: onChangeFavorite
+							}, {
+								'float': 'left',
+								text: defaultAssetInfo.name + '/MCF',
+								fontSize: '16px',
+								select: true,
+								width: 'auto',
+								onclick: onChangeAsset
+							}]
+						}
+					});
+
+					window.addEventListener('listenEvents', function(data) {
+						// console.log(data.detail.eventName + "/" + data.detail.msg);
+						switch (data.detail.eventName) {
+							case 'uploadAssetBasicInfo':
+								var defaultAssetInfo = readStorage("defaultAssetInfo")
+								checkFavoriteAssets(defaultAssetInfo.assetId) ? favoriteColor = 'blue' : favoriteColor = '';
+								jQuery(".asset-name").html(defaultAssetInfo.name);
+								ws.setStyle({
+									titleNView: {
+										'padding-right': '10px',
+										buttons: [{
+											text: '\ue6de',
+											fontSize: '25px',
+											fontSrc: '_www/resource/fonts/iconfont2.ttf',
+											onclick: toAssetDetail
+										}, {
+											type: 'favorite',
+											redDot: false,
+											width: 'auto',
+											color: favoriteColor,
+											onclick: onChangeFavorite
+										}, {
+											'float': 'left',
+											text: defaultAssetInfo.name + '/MCF',
+											fontSize: '16px',
+											select: true,
+											width: 'auto',
+											onclick: onChangeAsset
+										}]
+									}
+								});
+								setDefaultBuyPrice = false;
+								setDefaultSellPrice = false;
+								loadDealInfo();
+								loadBasicInfo();
+								loadFinishedInfo();
+								loadUnfinishedInfo();
+								break;
+						}
+					})
+
+					//收藏
+					function onChangeFavorite() {
+						var defaultAssetInfo = readStorage('defaultAssetInfo');
+						var favoriteAssetsInfo = readStorage('favoriteAssetsInfo');
+						// console.log(favoriteAssetsInfo)
+
+						//判断当前收藏状态
+						if (!checkFavoriteAssets(defaultAssetInfo.assetId)) {
+							favoriteAssetsInfo.push(defaultAssetInfo);
+							favoriteColor = 'blue';
+							mui.toast('已成功收藏' + defaultAssetInfo.name)
+						} else {
+							mui.each(favoriteAssetsInfo, function(key, assets) {
+								if (assets.assetId == defaultAssetInfo.assetId) {
+									favoriteAssetsInfo.splice(key, 1);
+									return;
+								}
+							})
+							favoriteColor = '';
+							mui.toast('已取消收藏' + defaultAssetInfo.name)
+						}
+						// return;
+						writeStorage('favoriteAssetsInfo', favoriteAssetsInfo);
+						ws.setStyle({
+							titleNView: {
+								'padding-right': '10px',
+								buttons: [{
+									text: '\ue6de',
+									fontSize: '25px',
+									fontSrc: '_www/resource/fonts/iconfont2.ttf',
+									onclick: toAssetDetail
+								}, {
+									type: 'favorite',
+									redDot: false,
+									width: 'auto',
+									color: favoriteColor,
+									onclick: onChangeFavorite
+								}, {
+									'float': 'left',
+									text: defaultAssetInfo.name + '/MCF',
+									fontSize: '16px',
+									select: true,
+									width: 'auto',
+									onclick: onChangeAsset
+								}]
+							}
+						});
+
+					}
+				});
+				//END mui.plusReady();
+
+
+				$.ready(function() {
+					document.getElementById('slider').addEventListener('slide', function(e) {
+						if (e.detail.slideNumber === 2) {
+							// loadUnfinishedInfo();
+						} else if (e.detail.slideNumber === 3) {
+							loadFinishedInfo();
+						}
+					});
+
+					//循环初始化所有下拉刷新，上拉加载。
+					$.each(document.querySelectorAll('#slider3 .mui-slider-group .mui-scroll'), function(index, pullRefreshEl) {
+						$(pullRefreshEl).pullToRefresh({
+							down: {
+								callback: function() {
+									var self = this;
+									setTimeout(function() {
+										var ul = self.element.querySelector('.mui-table-view');
+										// ul.insertBefore(createFragment(ul, index, 10, true), ul.firstChild);
+										reloadOrderList(ul, index);
+										self.refresh(true);
+										self.endPullDownToRefresh(false);
+									}, 1000);
+								}
+							},
+							up: {
+								callback: function() {
+									var self = this;
+									setTimeout(function() {
+										var ul = self.element.querySelector('.mui-table-view');
+										self.endPullUpToRefresh(createFragment(ul, index));
+									}, 1000);
+								}
+							}
+						});
+					});
+
+					//下拉刷新
+					var reloadOrderList = function(ul, index) {
+						// console.log(ul.children.length)
+						if (index === 0) {
+							console.log("下拉刷新买单")
+						} else if (index === 1) {
+							console.log("下拉刷新卖单")
+						}
+						unfinishedPageBuy = 1;
+						unfinishedPageSell = 1;
+						loadUnfinishedInfo();
+					}
+
+					//上拉加载
+					var createFragment = function(ul, index) {
+						var defaultAccount = readStorage('defaultAccount');
+						var defaultAssetInfo = readStorage('defaultAssetInfo');
+						var addr = defaultAccount.addr;
+						var assetId = defaultAssetInfo.assetId;
+						var end = false;
+						// console.log(unfinishedPageBuy);
+						var offset = unfinishedPageBuy * unfinishedLimit;
+						if (index === 0) {
+							console.log("上拉加载买单")
+							var url = API_SERVER + 'assets/orders/' + addr + '/0/' + assetId +
+								'?isClosed=false&isFulfilled=false&limit=' +
+								unfinishedLimit + '&offset=' + offset + '&reverse=true';
+						} else if (index === 1) {
+							console.log("上拉加载卖单")
+							var url = API_SERVER + 'assets/orders/' + addr + '/' + assetId +
+								'/0?isClosed=false&isFulfilled=false&limit=' +
+								unfinishedLimit + '&offset=' + offset + '&reverse=true';
+						}
+						mui.ajax(url, {
+							async: false,
+							success: function(data) {
+								// console.log(data);
+								for (var key in data) {
+									if (index === 0) {
+										price = parseFloat(data[key].fulfilled * data[key].price).toFixed(4) + '/' + parseFloat(data[key].amount *
+												data[key].price)
+											.toFixed(4);
+										amount = parseFloat(1 / data[key].price).toFixed(4);
+										domN = "#unBuy"
+									} else if (index === 1) {
+										price = parseFloat(data[key].fulfilled).toFixed(4) + '/' + parseFloat(data[key].amount)
+											.toFixed(4);
+										amount = parseFloat(data[key].price).toFixed(4);
+										domN = "#unSell"
+									}
+									var listHtml = '<li class="mui-table-view-cell">' +
+										'<div class="order-info">' +
+										'<span></span><span>' + defaultAssetInfo.name + '/MCF</span><span>' + timestamp2date(data[key].timestamp) +
+										'</span>' +
+										'</div>' +
+										'<div class="order-info2">' +
+										'<div class="order-percent">' +
+										'<div id="blue1circle" class="c100 p60 green">' +
+										'<span>' + parseInt((data[key].fulfilled / data[key].amount) * 100) + '%</span>' +
+										'<div class="slice">' +
+										'<div class="bar"></div>' +
+										'<div class="fill"></div>' +
+										'</div>' +
+										'</div>' +
+										'</div>' +
+										'<div class="order-num-price">' +
+										'<div>数量:' + price + '</div>' +
+										'<div>价格:' + amount + '</div>' +
+										'</div>' +
+										'<div class="order-btn">' +
+										'<button class="mcf-btn mcf-btn-blue-border" onclick="delOrder(\'' + data[key].orderId +
+										'\')">撤销</button>' +
+										'</div>' +
+										'</div>' +
+										'</li>';
+									jQuery(domN).append(listHtml)
+								}
+								unfinishedPageBuy++;
+								offset = unfinishedPageBuy * unfinishedLimit;
+								if (index === 0) {
+									var url = API_SERVER + 'assets/orders/' + addr + '/0/' + assetId +
+										'?isClosed=false&isFulfilled=false&limit=10&offset=' +
+										offset + '&reverse=true';
+								} else if (index === 1) {
+									var url = API_SERVER + 'assets/orders/' + addr + '/' + assetId +
+										'/0?isClosed=false&isFulfilled=false&limit=10&offset=' +
+										offset + '&reverse=true';
+								}
+								mui.ajax(url, {
+									async: false,
+									success: function(data) {
+										if (data.length == 0) {
+											end = true;
+										}
+									},
+									error: function(xhr, type, errorThrown) {
+										console.log(type);
+									}
+								});
+
+							},
+							error: function(xhr, type, errorThrown) {
+								//异常处理；
+								console.log(type);
+							}
+						});
+						console.log(end)
+						return end;
+					};
+				});
+			})(mui);
+
+
+
+			//加载定时刷新的交易信息
+			function loadDealInfo() {
+				var assetId = readStorage('defaultAssetInfo').assetId;
+				axios.all([getOrderListBuy(assetId), getOrderListSell(assetId), getTradesRecent(1, assetId), getTradesRecent(2,
+						assetId)])
+					.then(axios.spread(function(orderListBuy, orderListSell, type1, type2) {
+						// 												console.log("买单")
+						// 												console.table(orderListBuy.data)
+						// 												console.log("卖单")
+						// 												console.table(orderListSell.data)
+						//加载买单列表				
+						loadHtml(orderListBuy.data, ".order-type2 ul", 'buy');
+
+						//加载卖单列表
+						loadHtml(orderListSell.data, ".order-type1 ul", 'sell');
+
+						//加载增长百分比
+						// 						console.table(type1.data)
+						// 						console.table(type2.data)
+						arrDeal = type1.data.concat(type2.data)
+						arrDeal.sort(function(a, b) {
+							return b.timestamp - a.timestamp;
+						});
+						// console.table(arrDeal)
+						if (arrDeal.length == 1) {
+							// console.log("只有一条数据")
+							if (arrDeal[0].assetId == assetId && arrDeal[0].otherAssetId == 0) {
+								numPrice = arrDeal[0].otherAmount / arrDeal[0].amount;
+							} else if (arrDeal[0].otherAssetId == assetId && arrDeal[0].assetId == 0) {
+								numPrice = arrDeal[0].amount / arrDeal[0].otherAmount;
+							}
+							// console.log("价格:" + numPrice);
+							numPrice = parseFloat(numPrice).toFixed(8);
+							$(".recent-price").html(parseFloat(numPrice).toFixed(8));
+						} else if (arrDeal.length >= 2) {
+
+							// console.log("两条以上数据")
+							numPrice = parseFloat(arrDeal[0].otherAmount / arrDeal[0].amount).toFixed(6);
+
+							if (arrDeal[0].assetId == assetId && arrDeal[0].otherAssetId == 0) {
+								numPrice = arrDeal[0].otherAmount / arrDeal[0].amount;
+							} else if (arrDeal[0].otherAssetId == assetId && arrDeal[0].assetId == 0) {
+								numPrice = arrDeal[0].amount / arrDeal[0].otherAmount;
+							}
+							// console.log("第1笔:" + numPrice);
+
+							if (arrDeal[1].assetId == assetId && arrDeal[1].otherAssetId == 0) {
+								numPrice2 = arrDeal[1].otherAmount / arrDeal[1].amount;
+							} else if (arrDeal[1].otherAssetId == assetId && arrDeal[1].assetId == 0) {
+								numPrice2 = arrDeal[1].amount / arrDeal[1].otherAmount;
+							}
+							// console.log("第2笔:" + numPrice2);
+
+							numIncrease = (parseFloat((numPrice - numPrice2) / numPrice2 * 100).toFixed(2));
+							// console.log(numIncrease);
+							$(".recent-price").html(parseFloat(numPrice).toFixed(8));
+							if (numIncrease >= 0) {
+								$(".recent-increase").html("+" + parseFloat(numIncrease).toFixed(2) + "%");
+							} else {
+								$(".recent-increase").html('<span style="color:red">' + parseFloat(numIncrease).toFixed(2) + '%</span>');
+							}
+
+						} else {
+							// console.log("没有数据")
+							$(".recent-price").html("--");
+							$(".recent-increase").html("--%");
+						}
+					})).catch(function(error) {
+						// console.log(JSON.stringify(error.data.message))
+						if (error.response) {
+							// 请求已发出，但服务器响应的状态码不在 2xx 范围内
+							console.log(error.response.data);
+							console.log(error.response.status);
+							console.log(error.response.headers);
+						} else if (error.data) {
+							// Something happened in setting up the request that triggered an Error
+							console.log('Error:' + error.data.message);
+							return;
+						}
+					});
+			}
+
+			//加载定时刷新的用户信息
+			function loadBasicInfo() {
+				// console.log(JSON.stringify(readStorage('defaultAccount')))
+				var defaultAccount = readStorage('defaultAccount');
+				var defaultAssetInfo = readStorage('defaultAssetInfo');
+				var addr = defaultAccount.addr;
+				var assetId = defaultAssetInfo.assetId;
+				if (defaultAccount.length == 0) {
+					return;
+				}
+				axios.all([getDealBalance(addr, assetId)])
+					.then(axios.spread(function(dealBalance) {
+						// console.log($("#buyPrice").val())
+						var buyPrice = $("#buyPrice").val();
+						//加载代笔数量
+						$(".mcf-balance").html(parseFloat(dealBalance.data[0].balance).toFixed(2));
+						$(".deal-balance").html(parseFloat(dealBalance.data[1].balance).toFixed(2));
+						$("#canSell").html(parseFloat(dealBalance.data[1].balance).toFixed(2));
+						if (buyPrice !== "") {
+							$("#canBuy").html(parseFloat(dealBalance.data[0].balance / buyPrice).toFixed(2));
+						} else {
+							$("#canBuy").html('0.00');
+						}
+					})).catch(function(error) {
+						// console.log(JSON.stringify(error.data.message))
+						if (error.response) {
+							// 请求已发出，但服务器响应的状态码不在 2xx 范围内
+							console.log(error.response.data);
+							console.log(error.response.status);
+							console.log(error.response.headers);
+						} else if (error.data) {
+							// Something happened in setting up the request that triggered an Error
+							console.log('Error:' + error.data.message);
+							return;
+						}
+					});
+			}
+
+			function loadFinishedInfo() {
+				var defaultAccount = readStorage('defaultAccount');
+				var defaultAssetInfo = readStorage('defaultAssetInfo');
+				var addr = defaultAccount.addr;
+				var assetId = defaultAssetInfo.assetId;
+				if (defaultAccount.length == 0) {
+					return;
+				}
+				axios.all([getFinishedBuy(addr, assetId), getFinishedSell(addr, assetId)])
+					.then(axios.spread(function(finishedBuy, finishedSell) {
+						// console.log("已成交单")
+						// console.table(finishedBuy.data);
+						// console.table(finishedSell.data);
+						//加载用户已成交买单列表
+						loadHtmlUnfinished(finishedBuy.data, "#finishedBuy", 'buy');
+
+						//加载用户已成交卖单列表
+						loadHtmlUnfinished(finishedSell.data, "#finishedSell", 'sell');
+
+					})).catch(function(error) {
+						// console.log(JSON.stringify(error.data.message))
+						if (error.response) {
+							// 请求已发出，但服务器响应的状态码不在 2xx 范围内
+							console.log(error.response.data);
+							console.log(error.response.status);
+							console.log(error.response.headers);
+						} else if (error.data) {
+							// Something happened in setting up the request that triggered an Error
+							console.log('Error:' + error.data.message);
+							return;
+						}
+					});
+			}
+
+			function loadUnfinishedInfo() {
+				var defaultAccount = readStorage('defaultAccount');
+				var defaultAssetInfo = readStorage('defaultAssetInfo');
+				var addr = defaultAccount.addr;
+				var assetId = defaultAssetInfo.assetId;
+				if (defaultAccount.length == 0) {
+					return;
+				}
+				axios.all([getUnfinishedBuy(addr, assetId), getUnfinishedSell(addr, assetId)])
+					.then(axios.spread(function(unfinishedBuy, unfinishedSell) {
+						// console.log("未成交单")
+						// 												console.table(unfinishedBuy.data);
+						// 												console.table(unfinishedSell.data);
+
+						//加载用户未成交买单列表
+						loadHtmlUnfinished(unfinishedBuy.data, "#unBuy", 'buy');
+
+						//加载用户未成交卖单列表
+						loadHtmlUnfinished(unfinishedSell.data, "#unSell", 'sell');
+					})).catch(function(error) {
+						// console.log(JSON.stringify(error.data.message))
+						if (error.response) {
+							// 请求已发出，但服务器响应的状态码不在 2xx 范围内
+							console.log(error.response.data);
+							console.log(error.response.status);
+							console.log(error.response.headers);
+						} else if (error.data) {
+							// Something happened in setting up the request that triggered an Error
+							console.log('Error:' + error.data.message);
+							return;
+						}
+					});
+			}
+
+			//获取买入订单列表
+			function getOrderListBuy(assetId) {
+				return axios.get(API_SERVER + 'assets/orderbook/0/' + assetId + '?limit=10&reverse=true');
+			}
+			//获取卖出订单列表
+			function getOrderListSell(assetId) {
+				return axios.get(API_SERVER + 'assets/orderbook/' + assetId + '/0?limit=10&reverse=false');
+			}
+			//获取当前账户交易对资产
+			function getDealBalance(addr, assetId) {
+				return axios.get(API_SERVER + 'assets/balances?address=' + addr + '&assetid=0&assetid=' + assetId +
+					'&limit=2');
+			}
+			//获取未成交买单列表
+			function getUnfinishedBuy(addr, assetId) {
+				return axios.get(API_SERVER + 'assets/orders/' + addr + '/0/' + assetId +
+					'?isClosed=false&isFulfilled=false&limit=' + unfinishedLimit + '&reverse=true');
+			}
+			//获取未成交卖单列表
+			function getUnfinishedSell(addr, assetId) {
+				return axios.get(API_SERVER + 'assets/orders/' + addr + '/' + assetId +
+					'/0?isClosed=false&isFulfilled=false&limit=' + unfinishedLimit + '&reverse=true');
+			}
+			//获取已成交买单列表
+			function getFinishedBuy(addr, assetId) {
+				return axios.get(API_SERVER + 'assets/orders/' + addr + '/0/' + assetId +
+					'?isFulfilled=true&limit=5&reverse=true');
+			}
+			//获取已成交卖单列表
+			function getFinishedSell(addr, assetId) {
+				return axios.get(API_SERVER + 'assets/orders/' + addr + '/' + assetId +
+					'/0?isFulfilled=true&limit=5&reverse=true');
+			}
+
+			//获取最近交易数据
+			function getTradesRecent(type, assetId) {
+				if (type == 1) {
+					return axios.get(API_SERVER + 'assets/trades/recent?assetid=' + assetId + '&otherassetid=0&limit=0');
+				} else if (type == 2) {
+					return axios.get(API_SERVER + 'assets/trades/recent?assetid=0&otherassetid=' + assetId + '&limit=0');
+				}
+			}
+
+			//将order列表数据加载到页面内
+			function loadHtml(arr, domName, type) {
+				$(domName).html("");
+				if (type == "buy") {
+					if (arr.length >= 1) {
+						if (setDefaultSellPrice === false) {
+							// console.log("未设置默认卖价")
+							$("#sellPrice").val(arr[0].price);
+						}
+
+						for (var i = 0, len = arr.length; i < len; i++) {
+							var listHtml = '<li class="mui-table-view-cell">' +
+								'<div class="li-backcolor2"></div>' +
+								'<div class="li-item1">' + (i - 0 + 1) + '</div>' +
+								'<div class="li-item2">' + arr[i].price + '</div>' +
+								'<div class="li-item3">' + conversionDecimal(arr[i].unfulfilled, 1, true, 0) + '</div>' +
+								'</li>';
+							$(domName).append(listHtml)
+						}
+					} else {
+						if (setDefaultSellPrice === false) {
+							$("#sellPrice").val('');
+						}
+					}
+					setDefaultSellPrice = true;
+				} else if (type == "sell") {
+					if (arr.length >= 1) {
+						if (setDefaultBuyPrice === false) {
+							// console.log("未设置默认买价")
+							$("#buyPrice").val(arr[0].price);
+						}
+						for (var i = 0, len = arr.length; i < len; i++) {
+							var listHtml = '<li class="mui-table-view-cell">' +
+								'<div class="li-backcolor2"></div>' +
+								'<div class="li-item1">' + (i - 0 + 1) + '</div>' +
+								'<div class="li-item2">' + arr[i].price + '</div>' +
+								'<div class="li-item3">' + conversionDecimal(arr[i].unfulfilled, 1, true, 0) + '</div>' +
+								'</li>';
+							$(domName).prepend(listHtml)
+						}
+					} else {
+						if (setDefaultBuyPrice === false) {
+							// console.log("未设置默认买价")
+							$("#buyPrice").val('');
+						}
+					}
+					setDefaultBuyPrice = true;
+				}
+			}
+
+			//将未完成/已完成列表数据加载到页面内
+			function loadHtmlUnfinished(arr, domName, type) {
+				// 				console.log(arr)
+				// 				console.log(domName)
+				// 				console.log(type)
+				var defaultAccount = readStorage('defaultAccount');
+				var defaultAssetInfo = readStorage('defaultAssetInfo');
+				// console.log(JSON.stringify(arr));
+				var strType = "",
+					price = 0,
+					amount = 0;
+				$(domName).html("");
+
+				for (var i = 0, len = arr.length; i < len; i++) {
+					price = conversionDecimal((arr[i].price), 1, true, 8);
+					amount = parseFloat(arr[i].fulfilled).toFixed(4) + '/' + parseFloat(arr[i].amount).toFixed(4);
+					if (domName == '#unBuy' || domName == '#unSell') {
+						var btnHtml = '<button class="mcf-btn mcf-btn-blue-border" onclick="delOrder(\'' + arr[i].orderId +
+							'\')">撤销</button>';
+					} else {
+						var btnHtml = "";
+					}
+
+					var listHtml = '<li class="mui-table-view-cell">' +
+						'<div class="order-info">' +
+						'<span>' + strType + '</span><span>' + defaultAssetInfo.name + '/MCF</span><span>' + timestamp2date(arr[i].timestamp) +
+						'</span>' +
+						'</div>' +
+						'<div class="order-info2">' +
+						'<div class="order-percent">' +
+						'<div id="blue1circle" class="c100 p60 green">' +
+						'<span>' + parseInt((arr[i].fulfilled / arr[i].amount) * 100) + '%</span>' +
+						'<div class="slice">' +
+						'<div class="bar"></div>' +
+						'<div class="fill"></div>' +
+						'</div>' +
+						'</div>' +
+						'</div>' +
+						'<div class="order-num-price">' +
+						'<div>数量:' + amount + '</div>' +
+						'<div>价格:' + price + '</div>' +
+						'</div>' +
+						'<div class="order-btn">' + btnHtml +
+						'</div>' +
+						'</div>' +
+						'</li>';
+
+					$(domName).append(listHtml)
+				}
+				var dom1 = document.getElementsByClassName('c100')[0];
+				if (dom1) {
+					var percentWidth = document.getElementsByClassName('c100')[0].offsetWidth;
+
+				}
+			}
+
+			//发起交易
+			function initiate(type) {
+				var defaultAccount = readStorage('defaultAccount');
+				var defaultAssetInfo = readStorage('defaultAssetInfo');
+				var assetId = defaultAssetInfo.assetId;
+				var addr = defaultAccount.addr;
+				var amount = $("#" + type + "Amount").val();
+				var price = $("#" + type + "Price").val();
+				// 				console.log("填写价格:" + price)
+				// 				console.log("填写数量:" + amount)
+				if (typeof(defaultAccount.addr) == "undefined") {
+					mui.toast('尚未创建钱包');
+					return;
+				}
+				if (amount == "" || price == "") {
+					mui.toast('请填写数量和价格');
+					return;
+				}
+				if (type == "buy") {
+					var haveAssetId = 0;
+					var wantAssetId = assetId;
+				} else {
+					var haveAssetId = assetId;
+					var wantAssetId = 0;
+				}
+
+				// 				console.log("price:" + price)
+				// 				console.log("amount:" + amount)
+				// 				console.log("haveAssetId(卖出):" + haveAssetId)
+				// 				console.log("wantAssetId(买入):" + wantAssetId)
+				// return;
+				nacl_factory.instantiate(function(nacl) {
+					var btnArray = ['取消', '确定'];
+					mui.prompt('', '', '请输入密码：', btnArray, function(e) {
+						if (e.index == 1) {
+							if (e.value) {
+								var pwd = e.value;
+							} else {
+								mui.toast('请输入密码！');
+								return;
+							}
+							var txType = '0000000d';
+							var timestamp = parseInt(new Date().getTime()).toString(16);
+							timestamp = strAddZero(timestamp, 16);
+							var txGroupId = '00000000';
+
+							mui.get(API_SERVER + 'addresses/' + addr, {}, function(data) {
+								// console.log(data.reference)
+								if (!data.reference) {
+									mui.toast('交易失败，请稍后重试'); //未获取到lastreference
+									return;
+								} else {
+									var reference = nacl.to_hex(decode(data.reference));
+									var privateKey = checkAddrPwd(addr, pwd);
+									if (privateKey.error) {
+										mui.toast(privateKey.error);
+										return;
+									} else {
+										var privateKeyHex = nacl.to_hex((decode(privateKey)));
+										var kp = nacl.crypto_sign_seed_keypair(nacl.from_hex(privateKeyHex));
+										var publicKey = encode(kp.signPk);
+										var spk = nacl.to_hex(decode(publicKey));
+										haveAssetId = strAddZero(parseInt(haveAssetId).toString(16), 16);
+										wantAssetId = strAddZero(parseInt(wantAssetId).toString(16), 16);
+										amount = strAddZero(parseInt(math.parser().eval(amount + "*" + 100000000)).toString(16), 24);
+										price = strAddZero(parseInt(math.parser().eval(price + "*" + 100000000)).toString(16), 24);
+										var fee = strAddZero(parseInt(FEE * 100000000).toString(16), 16);
+										var signStr = txType + timestamp + txGroupId + reference + spk + haveAssetId + wantAssetId + amount +
+											price + fee;
+										signStr = encode(nacl.from_hex(signStr));
+										var trBytes = decode(signStr);
+										var kp1 = nacl.crypto_sign_seed_keypair(decode(privateKey));
+										var c = nacl.crypto_sign_detached(trBytes, kp1.signSk);
+										var buffer1 = new Uint8Array(trBytes);
+										var buffer2 = new Uint8Array(c);
+										var tmp = new Uint8Array(buffer1.byteLength + buffer2.byteLength);
+										tmp.set(buffer1, 0);
+										tmp.set(buffer2, buffer1.byteLength);
+										// console.log('tmp:' + encode(tmp));
+										// return;
+										mui.ajax(API_SERVER + 'transactions/process', {
+											data: encode(tmp),
+											dataType: 'json', //服务器返回json格式数据
+											type: 'post', //HTTP请求类型
+											timeout: 10000, //超时时间设置为10秒；
+											headers: {
+												'Content-Type': 'application/json'
+											},
+											success: function(data) {
+												if (data == true) {
+													mui.toast("订单已创建")
+												} else {
+													mui.toast("操作异常")
+												}
+											},
+											error: function(xhr, type, errorThrown) {
+												console.log(JSON.parse(xhr.response))
+												var errorInfo = JSON.parse(xhr.response)
+												if (JSON.parse(xhr.response).error == 312) {
+													mui.toast('操作失败，请稍后重试');
+												}
+											}
+										});
+									}
+								}
+							}, 'json');
+						}
+					}, 'div')
+					document.querySelector('.mui-popup-input input').type = 'password';
+				})
+			}
+
+			//删除订单
+			function delOrder(orderId) {
+				var defaultAccount = readStorage('defaultAccount');
+				var defaultAssetInfo = readStorage('defaultAssetInfo');
+				var assetId = defaultAssetInfo.assetId;
+				var addr = defaultAccount.addr;
+				nacl_factory.instantiate(function(nacl) {
+					var btnArray = ['取消', '确定'];
+					mui.prompt('', '', '请输入密码：', btnArray, function(e) {
+						if (e.index == 1) {
+							if (e.value) {
+								var pwd = e.value;
+							} else {
+								mui.toast('请输入密码！');
+								return;
+							}
+
+							var txType = '0000000e';
+							var timestamp = parseInt(new Date().getTime()).toString(16);
+							timestamp = strAddZero(timestamp, 16);
+							var txGroupId = '00000000';
+							console.log(data.reference)
+							mui.get(API_SERVER + 'addresses/' + addr, {}, function(data) {
+								console.log(data.reference)
+								if (!data.reference) {
+									mui.toast('操作失败，请稍后重试'); //未获取到lastreference
+									return;
+								} else {
+									var reference = nacl.to_hex(decode(data.reference));
+									var privateKey = checkAddrPwd(addr, pwd);
+									if (privateKey.error) {
+										mui.toast(privateKey.error);
+										return;
+									} else {
+										var privateKeyHex = nacl.to_hex((decode(privateKey)));
+										var kp = nacl.crypto_sign_seed_keypair(nacl.from_hex(privateKeyHex));
+										var publicKey = encode(kp.signPk);
+										var spk = nacl.to_hex(decode(publicKey));
+										orderId = nacl.to_hex(decode(orderId));
+										var fee = strAddZero(parseInt(FEE * 100000000).toString(16), 16);
+										var signStr = txType + timestamp + txGroupId + reference + spk + orderId + fee;
+										signStr = encode(nacl.from_hex(signStr));
+										var trBytes = decode(signStr);
+										var kp1 = nacl.crypto_sign_seed_keypair(decode(privateKey));
+										var c = nacl.crypto_sign_detached(trBytes, kp1.signSk);
+										var buffer1 = new Uint8Array(trBytes);
+										var buffer2 = new Uint8Array(c);
+										var tmp = new Uint8Array(buffer1.byteLength + buffer2.byteLength);
+										tmp.set(buffer1, 0);
+										tmp.set(buffer2, buffer1.byteLength);
+										console.log('tmp:' + encode(tmp));
+										// return;
+										mui.ajax(API_SERVER + 'transactions/process', {
+											data: encode(tmp),
+											dataType: 'json', //服务器返回json格式数据
+											type: 'post', //HTTP请求类型
+											timeout: 10000, //超时时间设置为10秒；
+											headers: {
+												'Content-Type': 'application/json'
+											},
+											success: function(data) {
+												if (data == true) {
+													mui.toast("订单已撤销")
+												} else {
+													mui.toast("操作异常")
+												}
+											},
+											error: function(xhr, type, errorThrown) {
+												console.log(JSON.parse(xhr.response))
+												var errorInfo = JSON.parse(xhr.response)
+												if (JSON.parse(xhr.response).error == 312) {
+													mui.toast('操作失败，请稍后重试');
+												}
+											}
+										});
+									}
+								}
+							}, 'json');
+						}
+					}, 'div')
+					document.querySelector('.mui-popup-input input').type = 'password';
+				})
+			}
+
+			function changeTurnover(type) {
+				var price = $("#" + type + "Price").val();
+				var amount = $("#" + type + "Amount").val();
+				if (price && amount) {
+					console.log(Number(math.eval(price + "*" + amount)));
+					$("#" + type + "Turnover").html(Number(math.eval(price + "*" + amount)));
+				} else {
+					console.log("输入不符合");
+				}
+
+			}
+
+			$("#buyPrice").bind("keyup", function() {
+				changeTurnover("buy");
+			})
+
+			$("#buyAmount").bind("keyup", function() {
+				changeTurnover("buy");
+			})
+
+			$("#sellPrice").bind("keyup", function() {
+				changeTurnover("sell");
+			})
+
+			$("#sellAmount").bind("keyup", function() {
+				changeTurnover("sell");
+			})
+
+			$("#sliderSegmentedControl").bind("tap", function() {
+				// console.log(11);
+				// console.log("focus:" + document.activeElement.id);
+				var input = document.getElementById(document.activeElement.id);
+				if (input) {
+					input.blur();
+				}
+				// console.log(input);
+
+			})
+
+
+
+
+			//切换资产
+			function onChangeAsset() {
+				clicked('deal/market.html', '行情', {
+					backButtonAutoControl: 'none',
+					aniShow: 'slide-in-left',
+				});
+			}
+
+			//打开资产详情
+			function toAssetDetail() {
+				var defaultAssetInfo = readStorage('defaultAssetInfo');
+				openWindow('./deal/asset-detail.html', defaultAssetInfo.name + '/MCF');
+			}
+
+			var clipboard = new ClipboardJS('#btnCopy');
+			clipboard.on('success', function(e) {
+				mui.toast('已复制');
+				e.clearSelection();
+			});
+
+			clipboard.on('error', function(e) {
+				alert('error');
+			});
+		</script>
+
+	</body>
+
+</html>

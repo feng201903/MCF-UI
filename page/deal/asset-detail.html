@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>行情</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1,user-scalable=no">
+		<meta name="apple-mobile-web-app-capable" content="yes">
+		<meta name="apple-mobile-web-app-status-bar-style" content="black">
+
+		<!--标准mui.css-->
+		<link rel="stylesheet" href="../../resource/css/mui.min.css">
+		<!--App自定义的css-->
+		<link rel="stylesheet" type="text/css" href="../../resource/css/mcf.app.css" />
+		<style>
+			li {
+				height: 30px;
+				width: 100%;
+			}
+
+			.mcf-url {
+				color: #007AFF;
+				text-decoration: underline;
+				width: 100%;
+				word-wrap: break-word
+			}
+		</style>
+	</head>
+	<body>
+
+		<div class="mui-content asset-detail-page">
+			<div class="market-info">
+				<div class="market-info-left">
+					<div class="recent-price">--</div>
+					<div class="recent-increase">--</div>
+				</div>
+				<div class="market-info-right">
+
+				</div>
+			</div>
+			<div class="market-statistics">
+				柱状图暂未开放
+			</div>
+			<div class="market-assetinfo-title">
+				资产资料
+			</div>
+			<div class="mui-scroll-wrapper">
+				<div class="mui-scroll market-assetinfo">
+					<div class="asset-logo">
+						<div class="asset-logo-img" style="height: 40px;"><img src="" id="issue-logo"></div>
+						<!-- <div class="asset-logo-name1" id="issue-name"></div>
+						<div class="asset-logo-name2" id="issue-name2"></div> -->
+					</div>
+					<ul class="mui-table-view">
+						<!-- <li><span>发行日期</span><span id="issue-time"></span></li> -->
+						<li><span>资产简称</span><span id="issue-name"></span></li>
+						<li><span>资产全称</span><span id="issue-name2"></span></li>
+						<li><span>资产中文名</span><span id="issue-description"></span></li>
+						<li><span>发行总量</span><span id="issue-quantity"></span></li>
+						<li><span>白皮书</span>
+						<!-- <span id="issue-url" class="mcf-url" onclick="mcfCopy('issue-url')"></span> -->
+						</li>
+						<div id="issue-url"  class="mcf-url" style="padding-bottom: 10px;width: 100%;" onclick="mcfCopy('issue-url')"></div>
+						<li><span>官网</span>
+						<!-- <span id="issue-web" class="mcf-url" onclick="mcfCopy('issue-web')"></span> -->
+						</li>
+						<div id="issue-web"  class="mcf-url" style="padding-bottom: 10px;" onclick="mcfCopy('issue-web')"></div>
+						
+						<li><span>简介</span><span></span></li>
+						<div id="issue-content"></div>
+					</ul>
+				</div>
+			</div>
+		</div>
+		<script src="../../resource/js/tool/mui.min.js"></script>
+		<script src="../../resource/js/tool/jquery.min.js"></script>
+		<script src="../../resource/js/tool/util.js"></script>
+		<script src="../../resource/js/tool/axios.min.js"></script>
+		<script src="../../resource/js/tool/clipboard.min.js"></script>
+		<script src="../../resource/js/mcf.js"></script>
+		<script>
+			var bgcolor = "bg-green";
+			mui.init({
+				swipeBack: false
+			});
+			(function($) {
+				$('.mui-scroll-wrapper').scroll({
+					indicators: true //是否显示滚动条
+				});
+				loadAssetInfo();
+				loadDealInfo();
+			})(mui);
+
+
+			//加载币种资料
+			function loadAssetInfo() {
+				var assetId = readStorage('defaultAssetInfo').assetId;
+				mui.get(API_SERVER+'assets/info?assetId=' + assetId, {}, function(data) {
+					// console.log(data);
+					if (data.data !== "") {
+						var dataInfo = JSON.parse(data.data);
+						$("#issue-content").html(decodeURIComponent(dataInfo.content));
+						$("#issue-name2").html(decodeURIComponent(dataInfo.full));
+						$("#issue-url").html(dataInfo.url);
+						jQuery("#issue-url").attr("data-clipboard-text", dataInfo.url);
+						$("#issue-web").html(dataInfo.web);
+						jQuery("#issue-web").attr("data-clipboard-text", dataInfo.web);
+						$("#issue-logo").attr('src', dataInfo.logo);
+					}
+					// console.log(dataInfo);
+
+					$("#issue-name").html(data.name)
+					$("#issue-quantity").html(data.quantity);
+					$("#issue-description").html(decodeURIComponent(data.description));
+
+				}, 'json');
+			}
+
+			function loadDealInfo() {
+				var assetId = readStorage('defaultAssetInfo').assetId;
+				axios.all([getTradesRecent(1, assetId), getTradesRecent(2,
+						assetId)])
+					.then(axios.spread(function(type1, type2) {
+						//加载增长百分比
+						arrDeal = type1.data.concat(type2.data)
+						arrDeal.sort(function(a, b) {
+							return b.timestamp - a.timestamp;
+						});
+						if (arrDeal.length == 1) {
+							// console.log("只有一条数据")
+							if (arrDeal[0].assetId == assetId && arrDeal[0].otherAssetId == 0) {
+								numPrice = arrDeal[0].otherAmount / arrDeal[0].amount;
+							} else if (arrDeal[0].otherAssetId == assetId && arrDeal[0].assetId == 0) {
+								numPrice = arrDeal[0].amount / arrDeal[0].otherAmount;
+							}
+							// console.log("价格:" + numPrice);
+							numPrice = parseFloat(numPrice).toFixed(6);
+							$(".recent-price").html(parseFloat(numPrice).toFixed(6));
+						} else if (arrDeal.length >= 2) {
+
+							// console.log("两条以上数据")
+							numPrice = parseFloat(arrDeal[0].otherAmount / arrDeal[0].amount).toFixed(6);
+
+							if (arrDeal[0].assetId == assetId && arrDeal[0].otherAssetId == 0) {
+								numPrice = arrDeal[0].otherAmount / arrDeal[0].amount;
+							} else if (arrDeal[0].otherAssetId == assetId && arrDeal[0].assetId == 0) {
+								numPrice = arrDeal[0].amount / arrDeal[0].otherAmount;
+							}
+							// console.log("第1笔:" + numPrice);
+
+							if (arrDeal[1].assetId == assetId && arrDeal[1].otherAssetId == 0) {
+								numPrice2 = arrDeal[1].otherAmount / arrDeal[1].amount;
+							} else if (arrDeal[1].otherAssetId == assetId && arrDeal[1].assetId == 0) {
+								numPrice2 = arrDeal[1].amount / arrDeal[1].otherAmount;
+							}
+							// console.log("第2笔:" + numPrice2);
+
+							numIncrease = (parseFloat((numPrice - numPrice2) / numPrice2 * 100).toFixed(2));
+							// console.log(numIncrease);
+							$(".recent-price").html(parseFloat(numPrice).toFixed(6));
+							$(".recent-increase").html(parseFloat(numIncrease).toFixed(2) + "%");
+						} else {
+							// console.log("没有数据")
+						}
+					}));
+			}
+
+			//获取最近交易数据
+			function getTradesRecent(type, assetId) {
+				if (type == 1) {
+					return axios.get(API_SERVER+'assets/trades/recent?assetid=' + assetId + '&otherassetid=0&limit=0');
+				} else if (type == 2) {
+					return axios.get(API_SERVER+'assets/trades/recent?assetid=0&otherassetid=' + assetId + '&limit=0');
+				}
+			}
+
+			function mcfCopy(id) {
+				var clipboard = new ClipboardJS('#'+id);
+				clipboard.on('success', function(e) {
+					mui.toast('已复制');
+					e.clearSelection();
+				});
+
+				clipboard.on('error', function(e) {
+					alert('error');
+				});
+			}
+		</script>
+
+	</body>
+
+</html>

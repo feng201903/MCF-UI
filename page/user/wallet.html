@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="utf-8">
+		<title>我的钱包</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1,user-scalable=no">
+		<meta name="apple-mobile-web-app-capable" content="yes">
+		<meta name="apple-mobile-web-app-status-bar-style" content="black">
+
+		<!--标准mui.css-->
+		<link rel="stylesheet" type="text/css" href="../../resource/css/mui.min.css">
+		<!--App自定义的css-->
+		<link rel="stylesheet" type="text/css" href="../../resource/css/mcf.app.css" />
+		<style>
+			@font-face {
+			  font-family: 'iconfont';
+			  src: url('../../resource/fonts/iconfont3.ttf') format('truetype');
+			}
+			
+			.mui-icon-forward2:before{
+				font-size: 14px;
+				font-family:"iconfont" !important;  
+				content: "\e50e";
+			}
+		</style>
+	</head>
+
+	<body class="wallet-page">
+		<div class="mui-content">
+			<div class="mui-scroll-wrapper">
+				<div class="mui-scroll">
+					<div id="muiCardBox">
+						<div id="muiCardBox">
+							
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="footer">
+			<div class="menu-item" onclick="toAdd('create')">创建钱包</div>
+			<div class="menu-item" onclick="toAdd('import')">导入钱包</div>
+		</div>
+		<script src="../../resource/js/tool/mui.min.js"></script>
+		<script src="../../resource/js/tool/jquery.min.js"></script>
+		<script src="../../resource/js/tool/common.js"></script>
+		<script src="../../resource/js/mcf.js"></script>
+		<script type="text/javascript" charset="utf-8">
+			// var storage = window.localStorage;
+			jQuery(".mui-content").css("height", jQuery(window).height() - 120 + "px");
+			jQuery(".mui-scroll-wrapper").css("height", jQuery(window).height() - 100 + "px");
+			// 			var listHtml = "";
+			// 			var urlAddr = "";
+			//mui初始化
+			mui.init({
+				swipeBack: true, //启用右滑关闭功能
+			});
+
+			function loadAccountInfo() {
+				// console.log(readStorage("defaultAccount"))
+				console.log("刷新钱包列表")
+				var accountData = readStorage("account"),
+					defaultAccount = readStorage("defaultAccount"),
+					urlAddr = "";
+				for (var i = 0, len = accountData.length; i < len; i++) {
+					urlAddr += "address=" + accountData[i].addr + "&";
+				}
+				mui.get(API_SERVER+'assets/balances?' + urlAddr + 'assetid=0&limit=0&reverse=true', {}, function(data) {
+					jQuery("#muiCardBox").html("");
+					for (var i = 0, len = accountData.length; i < len; i++) {
+						aaa: for (var j = 0, len = data.length; j < len; j++) {
+							if (data[j].address == accountData[i].addr) {
+								var mcfCount = data[j].balance;
+								break aaa;
+							} else {
+								var mcfCount = 0;
+							}
+						}
+						if (accountData[i].addr == defaultAccount.addr) {
+							listHtml = '<div class="mui-card" onclick="openWindow(\'assets.html?addr=' + accountData[i].addr +
+								'\',\'我的资产\')"><div class="mui-card-content"><div class="wallet-info-left"><div>' + accountData[i].name +
+								'</div><div>' + cutAddr(accountData[i].addr) +
+								'</div></div><div class="wallet-info-right"><span class="mui-icon mui-icon-forward2"></span>当前默认交易钱包<span class="mui-icon mui-icon-forward"></span></div></div><div class="mui-card-footer"><a class="mui-card-link" onclick="removeAccount(\'' +
+								accountData[i].addr + '\')">删除钱包</a><a class="mui-card-link">' +
+								mcfCount + ' MCF</a></div></div>';
+							jQuery("#muiCardBox").prepend(listHtml);
+						} else {
+							listHtml = '<div class="mui-card" onclick="openWindow(\'assets.html?addr=' + accountData[i].addr +
+								'\',\'我的资产\')"><div class="mui-card-content"><div class="wallet-info-left"><div>' + accountData[i].name +
+								'</div><div>' + cutAddr(accountData[i].addr) +
+								'</div></div><div class="wallet-info-right" onclick="setDefult(\'' + accountData[i].addr +
+								'\')">设置为默认交易钱包<span class="mui-icon mui-icon-forward"></span></div></div><div class="mui-card-footer"><a class="mui-card-link" onclick="removeAccount(\'' +
+								accountData[i].addr + '\')">删除钱包</a><a class="mui-card-link">' +
+								mcfCount + ' MCF</a></div></div>';
+							jQuery("#muiCardBox").append(listHtml);
+						}
+
+					}
+					jQuery(".wallet-info-right").click(function(event) {
+						event.stopPropagation();
+					})
+					jQuery(".mui-card-link").click(function(event) {
+						event.stopPropagation();
+					})
+				}, 'json');
+
+			}
+
+			(function($) {
+				$('.mui-scroll-wrapper').scroll({
+					indicators: true //是否显示滚动条
+				});
+				loadAccountInfo();
+				
+				window.addEventListener('listenEvents', function(data) {
+					console.log(data.detail.eventName + "/" + data.detail.msg);
+					
+					switch (data.detail.eventName) {
+						case 'updateAccountInfo':
+							loadAccountInfo();
+							break;
+						case 'createAddressSuccess':
+							loadAccountInfo();
+							break;
+						case 'importAddressSuccess':
+							loadAccountInfo();
+							break;
+					}
+				})
+			})(mui);
+
+			function removeAccount(addr) {
+				var accountData = readStorage("account");
+				console.log(accountData.length)
+				if (accountData.length <= 1) {
+					mui.toast("请至少保留一个钱包");
+					return;
+				}
+				var btnArray = ['否', '是'];
+				mui.confirm("移除" + addr + '？', 'Hello MUI', btnArray, function(e) {
+					if (e.index == 1) {
+						for (var key in accountData) {
+							if (accountData[key].addr == addr) {
+								accountData.splice(key, 1)
+							}
+						}
+						if (readStorage("defaultAccount").addr == addr) {
+							writeStorage("defaultAccount", accountData[0]);
+							var deal = plus.webview.getWebviewById('page/deal.html');
+							mui.fire(deal, 'listenEvents', {
+								msg: "默认钱包变更",
+								eventName: 'defaultAccountChange'
+							});
+						}
+						console.log(accountData.length);
+						writeStorage("account", accountData);
+						loadAccountInfo();
+					} else {
+						console.log("不移除" + addr);
+					}
+				})
+			}
+
+			function toAdd(type) {
+				if (readStorage("account").length >= 5) {
+					mui.toast('钱包数量已达到上限');
+					return;
+				}
+
+				if (type == "create") {
+					openWindow('../create/personal.html')
+				} else if (type == "import") {
+					openWindow('../create/import.html')
+				}
+			}
+
+			function setDefult(addr) {
+				var accountData = readStorage("account");
+				for (var key in accountData) {
+					console.log(accountData[key])
+					if (accountData[key].addr == addr) {
+						console.log(JSON.stringify(accountData[key]))
+						writeStorage("defaultAccount", accountData[key]);
+					}
+				}
+				var user = plus.webview.getWebviewById('page/user.html');
+				mui.fire(user, 'listenEvents', {
+					msg: "默认钱包变更",
+					eventName: 'defaultAccountChange'
+				});
+				var deal = plus.webview.getWebviewById('page/deal.html');
+				mui.fire(deal, 'listenEvents', {
+					msg: "默认钱包变更",
+					eventName: 'defaultAccountChange'
+				});
+				loadAccountInfo();
+			}
+		</script>
+	</body>
+
+</html>

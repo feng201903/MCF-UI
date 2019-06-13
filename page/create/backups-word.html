@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="utf-8">
+		<title>备份助记词</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1,user-scalable=no">
+		<meta name="apple-mobile-web-app-capable" content="yes">
+		<meta name="apple-mobile-web-app-status-bar-style" content="black">
+
+		<!--标准mui.css-->
+		<link rel="stylesheet" href="../../resource/css/mui.min.css">
+		<!--App自定义的css-->
+		<link rel="stylesheet" type="text/css" href="../../resource/css/mcf.app.css" />
+		<style>
+			.mui-content{
+				background-color: #FFF;
+				padding: 0px 5%;
+			}
+			.top-text span{
+				display: block;
+				
+				margin: 15px 0;
+			}
+			.top-text .text1{
+				margin-top: 60px;
+				font-weight: 600;
+				text-align: center;
+			}
+			.top-text .text2{
+				margin-top: 10px;
+				color: #C6C6C6;
+				font-size: 16px;
+			}
+			.top-text .text3{
+				margin-top: 35px;
+				background-color: #C8C8C8;
+				color: #FFF;
+				font-size: 16px;
+				padding: 20px 3%;
+				font-weight: 600;
+				border-radius: 3px;
+			}
+			.mcf-input-group{
+				margin-top: 30px;
+			}
+			
+		</style>
+
+	</head>
+
+	<body>
+		<div class="mui-content">
+			<div class="top-text">
+				<span class="text1">抄写下你的钱包助记词</span>
+				<span class="text2">助记词用于恢复钱包或重置钱包密码,一旦丢失无法找回,请小心保存.</span>
+				<span class="text3"></span>
+			</div>
+			<div class="mcf-input-group">
+				<button onclick="jumppage('backups-word-2.html')">下一步</button>
+			</div>
+		</div>
+
+		<script src="../../resource/js/tool/mui.min.js"></script>
+		<script src="../../resource/js/tool/jquery.min.js"></script>
+		<script src="../../resource/js/mcf.js"></script>
+		<script type="text/javascript" charset="utf-8">
+			//mui初始化
+			mui.init({
+				swipeBack: true //启用右滑关闭功能
+			});
+
+			(function($) {
+				mui.plusReady(function() {
+					mui.alert('截图容易造成助记词信息泄露,请抄写到纸上并存放到安全的位置.', '警告', function() {
+						var words = readStorage("tempAccount").words;
+						jQuery(".text3").html(words);
+					});
+				})
+			})(mui);
+		</script>
+	</body>
+
+</html>
